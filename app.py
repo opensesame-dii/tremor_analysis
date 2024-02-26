@@ -37,24 +37,24 @@ class MainApp:
     def main(page: ft.Page):
         t = ft.FilledTonalButton(text="run", on_click="ここどうしたらいいかよくわかんないです")
         page.controls.append(t)
-        page.update()    
+        page.update()
     ft.app(target=main)
-    
+
 
 
 class Spectrogram_analize:
     def __init__(self) :
         self.python = 54
-    
+
     def add(self,x):
         x = 1
         print(x)
-    
-    
-   
 
 
-        
+
+
+
+
 
 
 
