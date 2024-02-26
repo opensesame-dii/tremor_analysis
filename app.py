@@ -34,8 +34,19 @@ import pandas as pd
 from sklearn.decomposition import PCA
 
 class MainApp:
+    def __init__(self) -> None:
+        self.analysis_methods = [
+            Spectrogram_analize(),  # ここで解析手法のクラスをインスタンス化
+            # 他の解析手法もここに追加
+        ]
+
+    def run(self):
+        # ここでscan()も呼ぶべきかも(20240225ミーティングより)
+        for method in self.analysis_methods:
+            method.run()  # 全ての解析手法が，runメソッドを持っていることを前提とする
+
     def main(page: ft.Page):
-        t = ft.FilledTonalButton(text="run", on_click="ここどうしたらいいかよくわかんないです")
+        t = ft.FilledTonalButton(text="run", on_click="ここどうしたらいいかよくわかんないです")  # ここのon_clickにself.runを指定すると動くかな
         page.controls.append(t)
         page.update()
     ft.app(target=main)
@@ -44,7 +55,11 @@ class MainApp:
 
 class Spectrogram_analize:
     def __init__(self) :
+        self.result = None  # 最初はNoneにしておく
         self.python = 54
+
+    def run(self):
+        self.result = 123  # ここで結果を格納
 
     def add(self,x):
         x = 1
