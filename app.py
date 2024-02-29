@@ -34,12 +34,13 @@ import pandas as pd
 from sklearn.decomposition import PCA
 
 class MainApp:
+    """
     def main(page: ft.Page):
         t = ft.FilledTonalButton(text="run", on_click="ここどうしたらいいかよくわかんないです")
         page.controls.append(t)
         page.update()    
     ft.app(target=main)
-    
+    """
 
 
 class Spectrogram_analize:
@@ -49,8 +50,9 @@ class Spectrogram_analize:
     def add(self,x):
         x = 1
         print(x)
-    
-    
+
+
+
    
 
 
