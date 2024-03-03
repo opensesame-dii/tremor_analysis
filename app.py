@@ -18,6 +18,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import flet as ft
+from flet import ControlEvent
 
 # from PIL import Image, ImageTk
 import numpy as np
@@ -45,12 +46,18 @@ class MainApp:
         for method in self.analysis_methods:
             method.run()  # 全ての解析手法が，runメソッドを持っていることを前提とする
 
+    def on_run_click(self, e: ControlEvent):
+        """Buttonのon_clickでは, 引数にControlEventが渡されるが，run()では不要のため, この関数でwrapしている
 
-    def main(page: ft.Page):
-        t = ft.FilledTonalButton(text="run", on_click=self.run)  # ここのon_clickにself.runを指定すると動くかな
+        Args:
+            e (ControlEvent): click event
+        """
+        self.run()
+
+    def main(self, page: ft.Page):
+        t = ft.FilledTonalButton(text="run", on_click=self.on_run_click)
         page.controls.append(t)
         page.update()
-    ft.app(target=main)
 
 
 class Spectrogram_analize:
@@ -66,11 +73,6 @@ class Spectrogram_analize:
         print(x)
 
 
-
-
-
-
-
-
-
-
+if __name__ == "__main__":
+    app = MainApp()
+    ft.app(target=app.main)
