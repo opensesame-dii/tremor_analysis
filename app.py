@@ -45,13 +45,12 @@ class MainApp:
         for method in self.analysis_methods:
             method.run()  # 全ての解析手法が，runメソッドを持っていることを前提とする
 
-    """
+
     def main(page: ft.Page):
-        t = ft.FilledTonalButton(text="run", on_click="ここどうしたらいいかよくわかんないです")  # ここのon_clickにself.runを指定すると動くかな
+        t = ft.FilledTonalButton(text="run", on_click=self.run)  # ここのon_clickにself.runを指定すると動くかな
         page.controls.append(t)
         page.update()
     ft.app(target=main)
-"""
 
 
 class Spectrogram_analize:
