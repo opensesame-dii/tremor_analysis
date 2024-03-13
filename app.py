@@ -10,6 +10,7 @@ from copy import deepcopy
 from copy import copy
 from sys import exit
 from argparse import ArgumentParser
+from typing import Any
 
 import datetime
 
@@ -54,24 +55,41 @@ class MainApp:
         """
         self.run()
 
+    def setting_field(self):
+        for setting in self.analysis_methods:
+            setting.build_result_ui()
+
     def main(self, page: ft.Page):
         t = ft.FilledTonalButton(text="run", on_click=self.on_run_click)
+        self.setting_field()
         page.controls.append(t)
         page.update()
 
 
 class Spectrogram_analize:
     def __init__(self) :
-        self.result = None  # 最初はNoneにしておく
-        self.python = 54
+        self.data = 3
+        
+        #self.frame_range = None
 
-    def run(self):
-        self.result = 123  # ここで結果を格納
+    def run(self, data_i) -> dict[str, Any]:
+        self.val = 1 + self.data
+        self.answer = {"答え": self.val}
+        print(self.answer)
+        return self.answer
+        
 
-    def add(self,x):
-        x = 1
-        print(x)
+    def build_result_ui(self):
+        self.text_area = ft.Text("設定項目")
+        self.val_area = ft.TextField(hint_text="int")
+        return self.text_area, self.val_area
 
+        # Main_appでのrunでこれも呼ぶ？？
+
+    def update_ui(self):
+        # 横並びで一塊にして配置したい　https://qiita.com/donraq/items/1ac45ddfe0a803a94e27
+        # ここでつくる=>Main_appにUI関係のmake_picみたいなやつを作って並べる
+        print("test")
 
 if __name__ == "__main__":
     app = MainApp()
