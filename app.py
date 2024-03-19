@@ -44,6 +44,13 @@ class MainApp:
 
     def run(self):
         # ここでscan()も呼ぶべきかも(20240225ミーティングより)
+        data = ["result", "num"]
+        if self.target_dir:
+            self.output_file = os.path.join(self.target_dir.value, "result.tremor.csv")
+            with open(self.output_file, "w") as file:
+                writer = csv.writer(file)
+                writer.writerows(data)
+            print("file created")
         for method in self.analysis_methods:
             method.run()  # 全ての解析手法が，runメソッドを持っていることを前提とする
 
