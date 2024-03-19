@@ -80,7 +80,7 @@ class MainApp:
     def show_pick_folder(self, _: ft.ControlEvent):
         self.folder_picker.get_directory_path()
 
-# scan directory
+    # scan directory
     def scan(self,  _:ft.ControlEvent):
         if self.target_dir.value != "Not Selected":
             file_list = []
@@ -184,7 +184,7 @@ class Spectrogram_analize:
         self.answer = {"答え": self.val}
         print(self.answer)
         return self.answer
-        
+
 
     def build_result_ui(self):
         self.text_area = ft.Text("設定項目")
