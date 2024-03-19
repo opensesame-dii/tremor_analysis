@@ -34,6 +34,8 @@ from matplotlib import backend_tools as cbook
 # import PySimpleGUI as sg
 import pandas as pd
 from sklearn.decomposition import PCA
+import yaml
+
 
 class MainApp:
     def __init__(self) -> None:
@@ -55,34 +57,50 @@ class MainApp:
         """
         self.run()
 
+
     def setting_field(self):
         for setting in self.analysis_methods:
-            setting.build_result_ui()
+            setting.build_result_ui
+
+    def read_write(self, e: ControlEvent):
+        print("abc")
 
     def main(self, page: ft.Page):
-        t = ft.FilledTonalButton(text="run", on_click=self.on_run_click)
-        self.setting_field()
-        page.controls.append(t)
+        run_button = ft.OutlinedButton(text="run", on_click=self.on_run_click)
+        yaml_button = ft.OutlinedButton(text = "read & write", on_click=self.read_write)
+        y = ft.Container(content=ft.Column([run_button, yaml_button]))
+        page.add(y)
         page.update()
 
 
 class Spectrogram_analize:
     def __init__(self) :
         self.data = 3
-        
+
         #self.frame_range = None
 
-    def run(self, data_i) -> dict[str, Any]:
+    def read_parameters(self):
+        with open("config.yaml") as file:
+            self.config = yaml.safe_load(file)
+        print(self.config)
+
+    def run(self,) -> dict[str, Any]:
         self.val = 1 + self.data
-        self.answer = {"答え": self.val}
-        print(self.answer)
-        return self.answer
-        
+        self.answer = {"answer": self.val}
+        self.read_parameters()
+        self.write_parameters()
+
+    def write_parameters(self):
+        self.config ["key1"] = "change"
+        self.config["add_key"] = "add"
+        with open("config.yaml", "w") as file :
+            yaml.dump(self.config, file)
 
     def build_result_ui(self):
         self.text_area = ft.Text("設定項目")
         self.val_area = ft.TextField(hint_text="int")
-        return self.text_area, self.val_area
+        x = ft.Container(ft.Row(self.text_area,self.val_area))
+        return x
 
         # Main_appでのrunでこれも呼ぶ？？
 
@@ -90,6 +108,8 @@ class Spectrogram_analize:
         # 横並びで一塊にして配置したい　https://qiita.com/donraq/items/1ac45ddfe0a803a94e27
         # ここでつくる=>Main_appにUI関係のmake_picみたいなやつを作って並べる
         print("test")
+
+
 
 if __name__ == "__main__":
     app = MainApp()
