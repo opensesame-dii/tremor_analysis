@@ -41,6 +41,8 @@ class MainApp:
             Spectrogram_analize(),  # ここで解析手法のクラスをインスタンス化
             # 他の解析手法もここに追加
         ]
+        self.target_dir = ft.Text(value = "Not Selected")
+        self.log_content = ft.Text()
 
     def run(self):
         # ここでscan()も呼ぶべきかも(20240225ミーティングより)
@@ -75,6 +77,42 @@ class MainApp:
 
     def show_pick_folder(self, _: ft.ControlEvent):
         self.folder_picker.get_directory_path()
+
+# scan directory
+    def scan(self,  _:ft.ControlEvent):
+        if self.target_dir.value != "Not Selected":
+            file_list = []
+            self.file_num = 0
+            self.pairs_num = 0
+
+            # 最大3階層まで再帰的にディレクトリを探索
+            def recursive_search(directory, depth):
+                if depth > 3:
+                    return
+                csv_files = [f for f in os.listdir(directory) if f.endswith('.csv') and not f.endswith('.tremor.csv')]
+                self.file_num += len(csv_files)
+                if len(csv_files) == 2:
+                    file_list.append(tuple(os.path.join(directory, file) for file in csv_files))
+                    self.pairs_num += 1
+
+                elif len(csv_files) == 1:
+                    file_list.append((os.path.join(directory, csv_files[0]),))
+                else:
+                    for item in os.listdir(directory):
+                        path = os.path.join(directory, item)
+                        if os.path.isdir(path):
+                            recursive_search(path, depth + 1)
+
+            recursive_search(self.target_dir.value, 0)
+
+            # log_outputsの中身更新
+            self.log_content.value  = f"{self.file_num}files\n{self.pairs_num}pairs\nanalysis files\n{file_list}"
+
+        else: # Not Selected なら
+            self.log_content.value  = "No folder is selected"
+
+        self.page.update()
+
 
 
 class Spectrogram_analize:
