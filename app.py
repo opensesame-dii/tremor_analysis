@@ -34,6 +34,8 @@ from matplotlib import backend_tools as cbook
 # import PySimpleGUI as sg
 import pandas as pd
 from sklearn.decomposition import PCA
+import subprocess
+import platform
 
 class MainApp:
     def __init__(self) -> None:
@@ -113,6 +115,15 @@ class MainApp:
 
         self.page.update()
 
+    # open result directory
+    def open_result(self, _):
+        if platform.system() == "Windows": # Windows
+            subprocess.Popen(["explorer", self.target_dir.value], shell = True)
+        elif platform.system() == "Darwin": # Mac
+            subprocess.Popen(["open", self.target_dir.value])
+        else: # Linux
+            subprocess.Popen(["xdg-open", self.target_dir.value])
+        return
 
 
 class Spectrogram_analize:
