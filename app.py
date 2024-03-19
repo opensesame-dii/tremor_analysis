@@ -125,6 +125,38 @@ class MainApp:
             subprocess.Popen(["xdg-open", self.target_dir.value])
         return
 
+    def build_ui(self):
+        select_folder_button = ft.Row([ft.OutlinedButton(text = "Select Folder", on_click= self.show_pick_folder), self.target_dir])
+        scan_button = ft.OutlinedButton(text = "Scan", on_click= self.scan)
+        run_button = ft.OutlinedButton(text = "Run", on_click=self.run)
+        open_result_button = ft.OutlinedButton(text = "Open Result", on_click=self.open_result)
+        apply_button = ft.OutlinedButton(text = "Apply&Save Settings", on_click="")
+        settings = ft.Container(content = ft.Column([
+            ft.Row([ft.Text("Row start"), ft.TextField(height = 40,width=50)]),
+            ft.Row([ft.Text("Column start"), ft.TextField(height = 40,width=50)]),
+            ft.Row([ft.Text("Sensors num"), ft.TextField(height = 40,width=50)]),
+            ft.Row([ft.Text("Encoding"), ft.TextField(height = 40, width=100)]),
+            ft.Row([ft.Text("Sampling rate"), ft.TextField(height = 40,width=50), ft.Text("Hz")]),
+            ft.Row([ft.Text("max frequency"), ft.TextField(height = 40,width=50), ft.Text("Hz")]),
+            ft.Row([ft.Text("min frequency"), ft.TextField(height = 40,width=50), ft.Text("Hz")]),
+            apply_button
+            ]), padding = 25)
+        log_outputs = ft.Container(content = (ft.Column([
+            ft.Text("Log Outputs"),
+            ft.Container(content = self.log_content, border = ft.border.all(1, "black"), height=400, width=300 )], scroll = ft.ScrollMode.ALWAYS)
+            ),width="", height="" )
+
+        self.page.add(select_folder_button,
+                ft.Row([ft.Container(content = (ft.Column([
+                settings,
+                scan_button,
+                run_button,
+                open_result_button])
+                ), margin = 10,width = 300),
+                log_outputs])
+        )
+        return
+
 
 class Spectrogram_analize:
     def __init__(self) :
