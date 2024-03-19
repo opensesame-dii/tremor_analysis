@@ -66,17 +66,20 @@ class MainApp:
         for setting in self.analysis_methods:
             setting.build_result_ui()
 
-    def main(self, page: ft.Page):
-        t = ft.FilledTonalButton(text="run", on_click=self.on_run_click)
-        self.setting_field()
-        page.controls.append(t)
-        page.update()
+    # select folder
+    def on_folder_picked(self, e: ft.FilePickerResultEvent):
+        if e.path:
+            self.target_dir.value = e.path
+            self.page.update()
+        self.folder_picker = ft.FilePicker(on_result = self.on_folder_picked)
+
+    def show_pick_folder(self, _: ft.ControlEvent):
+        self.folder_picker.get_directory_path()
 
 
 class Spectrogram_analize:
     def __init__(self) :
         self.data = 3
-        
         #self.frame_range = None
 
     def run(self, data_i) -> dict[str, Any]:
