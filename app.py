@@ -157,6 +157,22 @@ class MainApp:
         )
         return
 
+    def main(self, page: ft.Page):
+        self.page = page
+
+        # page setting
+        self.page.title = "tremor_analysis"
+        self.page.window_width = 700  # 幅
+        self.page.window_height = ""  # 高さ
+        self.page.window_top = ""  # 位置(TOP)
+        self.page.window_left = ""  # 位置(LEFT)
+        self.page.window_always_on_top = True  # ウィンドウを最前面に固定
+
+        self.build_ui()
+        t = ft.FilledTonalButton(text="run", on_click=self.on_run_click)
+        self.setting_field()
+        page.controls.append(t)
+        self.page.update()
 
 class Spectrogram_analize:
     def __init__(self) :
