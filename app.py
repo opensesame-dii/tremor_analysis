@@ -45,7 +45,6 @@ class MainApp:
         ]
         self.target_dir = ft.Text(value = "Not Selected")
         self.log_content = ft.Text()
-        self.folder_picker = ft.FilePicker(on_result = self.on_folder_picked)
 
     def run(self):
         # ここでscan()も呼ぶべきかも(20240225ミーティングより)
@@ -126,6 +125,7 @@ class MainApp:
         return
 
     def build_ui(self):
+        self.folder_picker = ft.FilePicker(on_result = self.on_folder_picked)
         self.page.overlay.append(self.folder_picker)
         select_folder_button = ft.Row([ft.OutlinedButton(text = "Select Folder", on_click= self.show_pick_folder), self.target_dir])
         scan_button = ft.OutlinedButton(text = "Scan", on_click= self.scan)
