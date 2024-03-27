@@ -40,7 +40,7 @@ import yaml
 class MainApp:
     def __init__(self) -> None:
         self.analysis_methods = [
-            Spectrogram_analize(),  # ここで解析手法のクラスをインスタンス化
+            SpectrogramAnalysis(),  # ここで解析手法のクラスをインスタンス化
             # 他の解析手法もここに追加
         ]
 
@@ -84,7 +84,7 @@ class MainApp:
         page.update()
 
 
-class Spectrogram_analize:
+class SpectrogramAnalysis:
     def __init__(self) :
         self.data = 3
 
@@ -94,6 +94,15 @@ class Spectrogram_analize:
         self.val = 1 + self.data
         self.answer = {"answer": self.val}
 
+    def import_config(self):
+        with open("config.yaml") as file:
+            self.config = yaml.safe_load(file)
+        self.max = self.config["SpectrogramAnalysis"]["max"]
+        self.min = self.config["SpectrogramAnalysis"]["min"]
+
+
+    def export_config(self):
+        return self.config["SpectrogramAnalysis"]
 
     def build_result_ui(self):
         self.text_area = ft.Text("設定項目")

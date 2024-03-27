@@ -1,15 +1,9 @@
-add_key: add
-key1: change
+key1: one
 key2: 3
-key3:
-- list
-- ok
-key4:
-  dict: ok
-key5:
-  key5_1: xxx
-  key5_2: 3489
-  key5_3:
-  - a: 2
-  - - 12
-    - 3
+SpectrogramAnalysis:
+  max: 233
+  min: 3489
+
+fs:
+  max: 3
+  min: 1
