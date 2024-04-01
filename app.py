@@ -47,7 +47,7 @@ class MainApp:
         self.target_dir = ft.Text(value = "Not Selected")
         self.log_content = ft.Text()
 
-    def run(self):
+    def run(self, _):
         # ここでscan()も呼ぶべきかも(20240225ミーティングより)
         data = ["result", "num"]
         if self.target_dir:
