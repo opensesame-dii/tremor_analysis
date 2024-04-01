@@ -36,11 +36,12 @@ import pandas as pd
 from sklearn.decomposition import PCA
 import subprocess
 import platform
+import yaml
 
 class MainApp:
     def __init__(self) -> None:
         self.analysis_methods = [
-            Spectrogram_analize(),  # ここで解析手法のクラスをインスタンス化
+            SpectrogramAnalysis(),  # ここで解析手法のクラスをインスタンス化
             # 他の解析手法もここに追加
         ]
         self.target_dir = ft.Text(value = "Not Selected")
@@ -66,9 +67,23 @@ class MainApp:
         """
         self.run()
 
+
     def setting_field(self):
         for setting in self.analysis_methods:
-            setting.build_result_ui()
+            setting.build_result_ui
+
+    def read_config_file(self, e: ControlEvent):
+        with open("config.yaml") as file:
+            self.config = yaml.safe_load(file)
+        print(self.config)
+
+    def write_config_file(self, e: ControlEvent):
+        self.config ["key1"] = "change"
+        self.config["add_key"] = "add"
+        with open("config.yaml", "w") as file :
+            yaml.dump(self.config, file)
+        print(self.config)
+
 
     # select folder
     def on_folder_picked(self, e: ft.FilePickerResultEvent):
@@ -174,23 +189,38 @@ class MainApp:
         self.setting_field()
         page.controls.append(t)
         self.page.update()
+        run_button = ft.OutlinedButton(text="run", on_click=self.on_run_click)
+        read_button = ft.OutlinedButton(text = "read", on_click=self.read_config_file)
+        write_button = ft.OutlinedButton(text = "write", on_click=self.write_config_file)
+        y = ft.Container(content=ft.Column([run_button, read_button, write_button]))
+        page.add(y)
+        page.update()
 
-class Spectrogram_analize:
+
+class SpectrogramAnalysis:
     def __init__(self) :
         self.data = 3
         #self.frame_range = None
 
-    def run(self, data_i) -> dict[str, Any]:
+    def run(self,) -> dict[str, Any]:
         self.val = 1 + self.data
-        self.answer = {"答え": self.val}
-        print(self.answer)
-        return self.answer
+        self.answer = {"answer": self.val}
 
+    def import_config(self):
+        with open("config.yaml") as file:
+            self.config = yaml.safe_load(file)
+        self.max = self.config["SpectrogramAnalysis"]["max"]
+        self.min = self.config["SpectrogramAnalysis"]["min"]
+
+
+    def export_config(self):
+        return self.config["SpectrogramAnalysis"]
 
     def build_result_ui(self):
         self.text_area = ft.Text("設定項目")
         self.val_area = ft.TextField(hint_text="int")
-        return self.text_area, self.val_area
+        x = ft.Container(ft.Row(self.text_area,self.val_area))
+        return x
 
         # Main_appでのrunでこれも呼ぶ？？
 
@@ -198,6 +228,8 @@ class Spectrogram_analize:
         # 横並びで一塊にして配置したい　https://qiita.com/donraq/items/1ac45ddfe0a803a94e27
         # ここでつくる=>Main_appにUI関係のmake_picみたいなやつを作って並べる
         print("test")
+
+
 
 if __name__ == "__main__":
     app = MainApp()
