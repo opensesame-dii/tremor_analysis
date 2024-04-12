@@ -185,6 +185,7 @@ class MainApp:
         self.page.window_always_on_top = True  # ウィンドウを最前面に固定
 
         self.build_ui()
+        # 以下、全体の仕様が決まったらbuild_uiにつっこむべきかも       
         t = ft.FilledTonalButton(text="run", on_click=self.on_run_click)
         self.setting_field()
         page.controls.append(t)
@@ -217,7 +218,7 @@ class SpectrogramAnalysis:
         return self.config["SpectrogramAnalysis"]
 
     def build_result_ui(self):
-        self.text_area = ft.Text("設定項目")
+        self.text_area = ft.Text("設定項目") #設定項目：各解析内で固有に使う値（定数）
         self.val_area = ft.TextField(hint_text="int")
         x = ft.Container(ft.Row(self.text_area,self.val_area))
         return x
