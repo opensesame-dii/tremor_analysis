@@ -47,7 +47,7 @@ class MainApp:
         self.target_dir = ft.Text(value = "Not Selected")
         self.log_content = ft.Text()
 
-    def run(self, _):
+    def run(self):
         # ここでscan()も呼ぶべきかも(20240225ミーティングより)
         data = ["result", "num"]
         if self.target_dir:
@@ -94,8 +94,11 @@ class MainApp:
     def show_pick_folder(self, _: ft.ControlEvent):
         self.folder_picker.get_directory_path()
 
+    def on_scan_click(self, _: ft.ControlEvent):
+        self.scan()
+
     # scan directory
-    def scan(self,  _:ft.ControlEvent):
+    def scan(self):
         if self.target_dir.value != "Not Selected":
             file_list = []
             self.file_num = 0
@@ -129,8 +132,11 @@ class MainApp:
 
         self.page.update()
 
+    def on_open_result_click(self, _: ft.ControlEvent):
+        self.open_result()
+
     # open result directory
-    def open_result(self, _):
+    def open_result(self):
         if platform.system() == "Windows": # Windows
             subprocess.Popen(["explorer", self.target_dir.value], shell = True)
         elif platform.system() == "Darwin": # Mac
@@ -143,9 +149,9 @@ class MainApp:
         self.folder_picker = ft.FilePicker(on_result = self.on_folder_picked)
         self.page.overlay.append(self.folder_picker)
         select_folder_button = ft.Row([ft.OutlinedButton(text = "Select Folder", on_click= self.show_pick_folder), self.target_dir])
-        scan_button = ft.OutlinedButton(text = "Scan", on_click= self.scan)
-        run_button = ft.OutlinedButton(text = "Run", on_click=self.run)
-        open_result_button = ft.OutlinedButton(text = "Open Result", on_click=self.open_result)
+        scan_button = ft.OutlinedButton(text = "Scan", on_click= self.on_scan_click)
+        run_button = ft.OutlinedButton(text = "Run", on_click=self.on_run_click)
+        open_result_button = ft.OutlinedButton(text = "Open Result", on_click=self.on_open_result_click)
         apply_button = ft.OutlinedButton(text = "Apply&Save Settings", on_click="")
         settings = ft.Container(content = ft.Column([
             ft.Row([ft.Text("Row start"), ft.TextField(height = 40,width=50)]),
