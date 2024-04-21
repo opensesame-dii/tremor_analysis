@@ -1,47 +1,124 @@
-import flet as ft
-import os
+from cgitb import text
 import csv
+from logging import root, warning
+import os
+from io import BytesIO
+from re import S
+# from shutil import rmtree
+import matplotlib.pyplot as plt
+from copy import deepcopy
+from copy import copy
+from sys import exit
+from argparse import ArgumentParser
+from typing import Any
+
+import datetime
+
+import tkinter as tk
+from tkinter import ttk
+from tkinter import filedialog
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import flet as ft
+from flet import ControlEvent
+
+# from PIL import Image, ImageTk
+import numpy as np
+from scipy.signal import hamming, detrend, morlet2, cwt, spectrogram, get_window, butter, sosfilt
+from matplotlib import use
+use('TkAgg')
+from matplotlib.mlab import cohere, window_hanning
+from matplotlib.pyplot import specgram as pltspectrogram
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib import backend_tools as cbook
+# import PySimpleGUI as sg
+import pandas as pd
+from sklearn.decomposition import PCA
 import subprocess
 import platform
-from typing import List, Union, Tuple
+import yaml
 
 class MainApp:
-    def __init__(self):
+    def __init__(self) -> None:
+        self.analysis_methods = [
+            SpectrogramAnalysis(),  # ここで解析手法のクラスをインスタンス化
+            # 他の解析手法もここに追加
+        ]
         self.target_dir = ft.Text(value = "Not Selected")
         self.log_content = ft.Text()
 
+    def run(self):
+        # ここでscan()も呼ぶべきかも(20240225ミーティングより)
+        data = ["result", "num"]
+        if self.target_dir:
+            self.output_file = os.path.join(self.target_dir.value, "result.tremor.csv")
+            with open(self.output_file, "w") as file:
+                writer = csv.writer(file)
+                writer.writerows(data)
+            print("file created")
+        for method in self.analysis_methods:
+            method.run()  # 全ての解析手法が，runメソッドを持っていることを前提とする
 
-    #ファイル選択
+    def on_run_click(self, e: ControlEvent):
+        """Buttonのon_clickでは, 引数にControlEventが渡されるが，run()では不要のため, この関数でwrapしている
+
+        Args:
+            e (ControlEvent): click event
+        """
+        self.run()
+
+    def on_apply_cilck(self, e:ControlEvent):
+        self.apply()
+
+    # apply and save settings
+    def apply(self):
+        '''引数
+            self
+            概要
+            入力されたパラメータを読み取りConfigFileHandlerに渡す
+            ConfigFileHandlerのupdateを呼ぶ
+            引数にkeys: List[str], new_value: Anyを渡す
+        '''
+        print("apply")
+        return
+
+    # select folder
     def on_folder_picked(self, e: ft.FilePickerResultEvent):
         if e.path:
             self.target_dir.value = e.path
             self.page.update()
 
-
-
     def show_pick_folder(self, _: ft.ControlEvent):
         self.folder_picker.get_directory_path()
 
 
-    # ディレクトリのscan
-    def scan(self,  _:ft.ControlEvent):
+    def on_scan_click(self, _: ft.ControlEvent):
+        self.scan()
+
+        # log_outputsの中身更新
+        self.log_content.value  = f"{self.file_num}files\n{self.pairs_num}pairs\nanalysis files\n{self.file_list}"
+        self.page.update()
+
+
+    # scan directory
+    def scan(self):
         if self.target_dir.value != "Not Selected":
-            file_list = []
+            self.file_list = []
             self.file_num = 0
             self.pairs_num = 0
 
-            # 再帰的にディレクトリを探索←最大３階層まで
+            # 最大3階層まで再帰的にディレクトリを探索
             def recursive_search(directory, depth):
                 if depth > 3:
                     return
                 csv_files = [f for f in os.listdir(directory) if f.endswith('.csv') and not f.endswith('.tremor.csv')]
                 self.file_num += len(csv_files)
                 if len(csv_files) == 2:
-                    file_list.append(tuple(os.path.join(directory, file) for file in csv_files))
+                    self.file_list.append(tuple(os.path.join(directory, file) for file in csv_files))
                     self.pairs_num += 1
 
                 elif len(csv_files) == 1:
-                    file_list.append((os.path.join(directory, csv_files[0]),))
+                    self.file_list.append((os.path.join(directory, csv_files[0]),))
                 else:
                     for item in os.listdir(directory):
                         path = os.path.join(directory, item)
@@ -50,26 +127,12 @@ class MainApp:
 
             recursive_search(self.target_dir.value, 0)
 
-            # log_outputsの中身更新←スクロールバーつけたい
-            self.log_content.value  = f"{self.file_num}files\n{self.pairs_num}pairs\nanalysis files\n{file_list}"
 
-        else: # Not Selected なら
-            self.log_content.value  = "No folder is selected"
+    def on_open_result_click(self, _: ft.ControlEvent):
+        self.open_result()
 
-        self.page.update()
-
-    # runボタン
-    def run(self, _):
-        data = ["result", "num"]
-        if self.target_dir:
-            self.output_file = os.path.join(self.target_dir.value, "result.tremor.csv")
-            with open(self.output_file, "w") as file:
-                writer = csv.writer(file)
-                writer.writerows(data)
-            print("file created")
-
-    # open_result ボタン
-    def open_result(self, _):
+    # open result directory
+    def open_result(self):
         if platform.system() == "Windows": # Windows
             subprocess.Popen(["explorer", self.target_dir.value], shell = True)
         elif platform.system() == "Darwin": # Mac
@@ -82,10 +145,10 @@ class MainApp:
         self.folder_picker = ft.FilePicker(on_result = self.on_folder_picked)
         self.page.overlay.append(self.folder_picker)
         select_folder_button = ft.Row([ft.OutlinedButton(text = "Select Folder", on_click= self.show_pick_folder), self.target_dir])
-        scan_button = ft.OutlinedButton(text = "Scan", on_click= self.scan)
-        run_button = ft.OutlinedButton(text = "Run", on_click=self.run)
-        open_result_button = ft.OutlinedButton(text = "Open Result", on_click=self.open_result)
-        apply_button = ft.OutlinedButton(text = "Apply&Save Settings", on_click="")
+        scan_button = ft.OutlinedButton(text = "Scan", on_click= self.on_scan_click)
+        run_button = ft.OutlinedButton(text = "Run", on_click=self.on_run_click)
+        open_result_button = ft.OutlinedButton(text = "Open Result", on_click=self.on_open_result_click)
+        apply_button = ft.OutlinedButton(text = "Apply&Save Settings", on_click=self.on_apply_cilck)
         settings = ft.Container(content = ft.Column([
             ft.Row([ft.Text("Row start"), ft.TextField(height = 40,width=50)]),
             ft.Row([ft.Text("Column start"), ft.TextField(height = 40,width=50)]),
@@ -98,7 +161,7 @@ class MainApp:
             ]), padding = 25)
         log_outputs = ft.Container(content = (ft.Column([
             ft.Text("Log Outputs"),
-            ft.Container(content = self.log_content, border = ft.border.all(1, "black"), height=500, width=300 )], scroll = ft.ScrollMode.ALWAYS)
+            ft.Container(content = self.log_content, border = ft.border.all(1, "black"), height=400, width=300 )], scroll = ft.ScrollMode.ALWAYS)
             ),width="", height="" )
 
         self.page.add(select_folder_button,
@@ -114,7 +177,8 @@ class MainApp:
 
     def main(self, page: ft.Page):
         self.page = page
-        #ページ設定
+
+        # page setting
         self.page.title = "tremor_analysis"
         self.page.window_width = 700  # 幅
         self.page.window_height = ""  # 高さ
@@ -125,6 +189,37 @@ class MainApp:
         self.build_ui()
         self.page.update()
 
+class SpectrogramAnalysis:
+    def __init__(self) :
+        self.data = 3
+        #self.frame_range = None
+
+    def run(self,) -> dict[str, Any]:
+        self.val = 1 + self.data
+        self.answer = {"answer": self.val}
+
+    def import_config(self):
+        with open("config.yaml") as file:
+            self.config = yaml.safe_load(file)
+        self.max = self.config["SpectrogramAnalysis"]["max"]
+        self.min = self.config["SpectrogramAnalysis"]["min"]
+
+
+    def export_config(self):
+        return self.config["SpectrogramAnalysis"]
+
+    def build_result_ui(self):
+        self.text_area = ft.Text("設定項目") #設定項目：各解析内で固有に使う値（定数）
+        self.val_area = ft.TextField(hint_text="int")
+        x = ft.Container(ft.Row(self.text_area,self.val_area))
+        return x
+
+        # Main_appでのrunでこれも呼ぶ？？
+
+    def update_ui(self):
+        # 横並びで一塊にして配置したい　https://qiita.com/donraq/items/1ac45ddfe0a803a94e27
+        # ここでつくる=>Main_appにUI関係のmake_picみたいなやつを作って並べる
+        print("test")
 if __name__ == "__main__":
     app = MainApp()
     ft.app(target = app.main)
