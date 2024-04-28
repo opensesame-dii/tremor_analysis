@@ -120,11 +120,14 @@ class MainApp:
 
     def on_scan_click(self, _: ft.ControlEvent):
         self.scan()
+        # log_outputsの中身更新
+        self.log_content.value  = f"{self.file_num}files\n{self.pairs_num}pairs\nanalysis files\n{self.file_list}"
+        self.page.update()
 
     # scan directory
     def scan(self):
         if self.target_dir.value != "Not Selected":
-            file_list = []
+            self.file_list = []
             self.file_num = 0
             self.pairs_num = 0
 
@@ -135,11 +138,11 @@ class MainApp:
                 csv_files = [f for f in os.listdir(directory) if f.endswith('.csv') and not f.endswith('.tremor.csv')]
                 self.file_num += len(csv_files)
                 if len(csv_files) == 2:
-                    file_list.append(tuple(os.path.join(directory, file) for file in csv_files))
+                    self.file_list.append(tuple(os.path.join(directory, file) for file in csv_files))
                     self.pairs_num += 1
 
                 elif len(csv_files) == 1:
-                    file_list.append((os.path.join(directory, csv_files[0]),))
+                    self.file_list.append((os.path.join(directory, csv_files[0]),))
                 else:
                     for item in os.listdir(directory):
                         path = os.path.join(directory, item)
@@ -147,14 +150,7 @@ class MainApp:
                             recursive_search(path, depth + 1)
 
             recursive_search(self.target_dir.value, 0)
-
-            # log_outputsの中身更新
-            self.log_content.value  = f"{self.file_num}files\n{self.pairs_num}pairs\nanalysis files\n{file_list}"
-
-        else: # Not Selected なら
-            self.log_content.value  = "No folder is selected"
-
-        self.page.update()
+            return(self.file_list, self.file_num, self.pairs_num)
 
     def on_open_result_click(self, _: ft.ControlEvent):
         self.open_result()
@@ -192,10 +188,9 @@ class MainApp:
             ft.Row([ft.Text("min frequency"), ft.TextField(height = 40,width=50), ft.Text("Hz")]),
             apply_button
             ]), padding = 25)
-        log_outputs = ft.Container(content = (ft.Column([
+        log_outputs = ft.Column([
             ft.Text("Log Outputs"),
-            ft.Container(content = self.log_content, border = ft.border.all(1, "black"), height=400, width=300 )], scroll = ft.ScrollMode.ALWAYS)
-            ),width="", height="" )
+            ft.Container(content = self.log_content, border = ft.border.all(1, "black"), height=400, width=300)], scroll = ft.ScrollMode.AUTO )
 
         self.page.add(select_folder_button,
                 ft.Row([ft.Container(content = (ft.Column([
