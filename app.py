@@ -45,7 +45,7 @@ class MainApp:
             # 他の解析手法もここに追加
         ]
         self.target_dir = ft.Text(value = "Not Selected")
-        self.log_content = ft.Text()
+        self.config_file_handler = config_file_handler
 
     def run(self):
         # ここでscan()も呼ぶべきかも(20240225ミーティングより)
@@ -93,6 +93,30 @@ class MainApp:
 
     def show_pick_folder(self, _: ft.ControlEvent):
         self.folder_picker.get_directory_path()
+
+
+    def on_apply_cilck(self, _:ft.ControlEvent):
+        self.apply()
+
+    # apply and save settings
+    def apply(self):
+        '''引数
+            self
+            概要
+            入力されたパラメータを読み取りConfigFileHandlerに渡す
+            ConfigFileHandlerのupdateを呼ぶ
+            引数にkeys: List[str], new_value: Anyを渡す
+        '''
+        print("apply")
+        keys = []
+        new_value = ""
+
+        print(self.row_start.value, self.column_start.value)
+        keys = ["?"]
+        new_value = self.row_start.value
+        self.config_file_handler.update(keys, new_value)
+        return
+
 
     def on_scan_click(self, _: ft.ControlEvent):
         self.scan()
@@ -146,16 +170,21 @@ class MainApp:
         return
 
     def build_ui(self):
+        self.row_start = ft.TextField(height=40, width = 50)
+        self.column_start = ft.TextField(height=40, width = 50)
+
+        self.log_content = ft.Text()
+
         self.folder_picker = ft.FilePicker(on_result = self.on_folder_picked)
         self.page.overlay.append(self.folder_picker)
         select_folder_button = ft.Row([ft.OutlinedButton(text = "Select Folder", on_click= self.show_pick_folder), self.target_dir])
         scan_button = ft.OutlinedButton(text = "Scan", on_click= self.on_scan_click)
         run_button = ft.OutlinedButton(text = "Run", on_click=self.on_run_click)
         open_result_button = ft.OutlinedButton(text = "Open Result", on_click=self.on_open_result_click)
-        apply_button = ft.OutlinedButton(text = "Apply&Save Settings", on_click="")
+        apply_button = ft.OutlinedButton(text = "Apply&Save Settings", on_click=self.on_apply_cilck)
         settings = ft.Container(content = ft.Column([
-            ft.Row([ft.Text("Row start"), ft.TextField(height = 40,width=50)]),
-            ft.Row([ft.Text("Column start"), ft.TextField(height = 40,width=50)]),
+            ft.Row([ft.Text("Row start"), self.row_start]),
+            ft.Row([ft.Text("Column start"), self.column_start]),
             ft.Row([ft.Text("Sensors num"), ft.TextField(height = 40,width=50)]),
             ft.Row([ft.Text("Encoding"), ft.TextField(height = 40, width=100)]),
             ft.Row([ft.Text("Sampling rate"), ft.TextField(height = 40,width=50), ft.Text("Hz")]),
@@ -236,8 +265,13 @@ class SpectrogramAnalysis:
         # ここでつくる=>Main_appにUI関係のmake_picみたいなやつを作って並べる
         print("test")
 
+class ConfigFileHandler:
+    def update(self, keys:list[str], new_value: Any):
+        print("keys:", keys, "new_value:", new_value)
+        return
 
 
 if __name__ == "__main__":
+    config_file_handler = ConfigFileHandler()
     app = MainApp()
     ft.app(target=app.main)
