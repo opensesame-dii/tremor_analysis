@@ -38,6 +38,7 @@ import subprocess
 import platform
 import yaml
 
+config = {}
 class MainApp:
     def __init__(self) -> None:
         self.analysis_methods = [
@@ -49,6 +50,9 @@ class MainApp:
 
     def run(self):
         # ここでscan()も呼ぶべきかも(20240225ミーティングより)
+        self.scan()
+
+        #　ダミーの結果ファイル作る←build_result_uiみたいな関数を呼ぶ？
         data = ["result", "num"]
         if self.target_dir:
             self.output_file = os.path.join(self.target_dir.value, "result.tremor.csv")
@@ -56,6 +60,7 @@ class MainApp:
                 writer = csv.writer(file)
                 writer.writerows(data)
             print("file created")
+
         for method in self.analysis_methods:
             method.run()  # 全ての解析手法が，runメソッドを持っていることを前提とする
 
@@ -106,15 +111,15 @@ class MainApp:
             入力されたパラメータを読み取りConfigFileHandlerに渡す
             ConfigFileHandlerのupdateを呼ぶ
             引数にkeys: List[str], new_value: Anyを渡す
+            →項目と値を辞書型に組み立てて、publicのself.configを書き換える
+            　export_configを呼ぶ（update関数は消す）
         '''
         print("apply")
-        keys = []
-        new_value = ""
-
+        #__.valueがそれぞれのTextFieldにかかれた値
         print(self.row_start.value, self.column_start.value)
-        keys = ["?"]
-        new_value = self.row_start.value
-        self.config_file_handler.update(keys, new_value)
+        config = {"row_start":self.row_start.value}
+        print(config)
+        self.config_file_handler.export_config()
         return
 
 
@@ -215,7 +220,7 @@ class MainApp:
         self.page.window_always_on_top = True  # ウィンドウを最前面に固定
 
         self.build_ui()
-        # 以下、全体の仕様が決まったらbuild_uiにつっこむべきかも       
+        # 以下、全体の仕様が決まったらbuild_uiにつっこむべきかも
         t = ft.FilledTonalButton(text="run", on_click=self.on_run_click)
         self.setting_field()
         page.controls.append(t)
@@ -263,6 +268,10 @@ class SpectrogramAnalysis:
 class ConfigFileHandler:
     def update(self, keys:list[str], new_value: Any):
         print("keys:", keys, "new_value:", new_value)
+        return
+
+    def export_config(self):
+        config_data = config
         return
 
 
