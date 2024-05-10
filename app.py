@@ -10,7 +10,7 @@ from copy import deepcopy
 from copy import copy
 from sys import exit
 from argparse import ArgumentParser
-from typing import Any
+from typing import Any, Union
 
 import datetime
 
@@ -38,7 +38,7 @@ import subprocess
 import platform
 import yaml
 
-config = {}
+
 class MainApp:
     def __init__(self) -> None:
         self.analysis_methods = [
@@ -50,7 +50,7 @@ class MainApp:
 
     def run(self):
         # ここでscan()も呼ぶべきかも(20240225ミーティングより)
-        self.scan()
+        file_list, file_num, pairs_num = self.scan()
 
         #　ダミーの結果ファイル作る←build_result_uiみたいな関数を呼ぶ？
         data = ["result", "num"]
@@ -61,8 +61,15 @@ class MainApp:
                 writer.writerows(data)
             print("file created")
 
-        for method in self.analysis_methods:
-            method.run()  # 全ての解析手法が，runメソッドを持っていることを前提とする
+        for file_pair in file_list:
+            for method in self.analysis_methods:
+                # file_pairの中のファイルを読み込む
+                # ペアデータを受け取る解析で，かつ，file_pairの長さが2の場合は，その解析をする
+                # 単一データを受け取る解析なら，file_pairの全ての要素に対して実行する
+                result = method.run()  # 全ての解析手法が，runメソッドを持っていることを前提とする
+                # 結果をファイルに書き込む
+
+
 
     def on_run_click(self, e: ControlEvent):
         """Buttonのon_clickでは, 引数にControlEventが渡されるが，run()では不要のため, この関数でwrapしている
@@ -71,6 +78,7 @@ class MainApp:
             e (ControlEvent): click event
         """
         self.run()
+        # 実行が終わったらその旨を表示
 
 
     def setting_field(self):
@@ -119,35 +127,36 @@ class MainApp:
         print(self.row_start.value, self.column_start.value)
         config = {"row_start":self.row_start.value}
         print(config)
+        self.config_file_handler.content = config
         self.config_file_handler.export_config()
         return
 
 
     def on_scan_click(self, _: ft.ControlEvent):
-        self.scan()
+        file_list, file_num, pairs_num = self.scan()
         # log_outputsの中身更新
-        self.log_content.value  = f"{self.file_num}files\n{self.pairs_num}pairs\nanalysis files\n{self.file_list}"
+        self.log_content.value  = f"{file_num}files\n{pairs_num}pairs\nanalysis files\n{file_list}"
         self.page.update()
 
     # scan directory
-    def scan(self):
+    def scan(self) -> list(Union[tuple[str], tuple[str, str]]):
         if self.target_dir.value != "Not Selected":
-            self.file_list = []
-            self.file_num = 0
-            self.pairs_num = 0
+            file_list = []
+            file_num = 0
+            pairs_num = 0
 
             # 最大3階層まで再帰的にディレクトリを探索
             def recursive_search(directory, depth):
                 if depth > 3:
                     return
                 csv_files = [f for f in os.listdir(directory) if f.endswith('.csv') and not f.endswith('.tremor.csv')]
-                self.file_num += len(csv_files)
+                file_num += len(csv_files)
                 if len(csv_files) == 2:
-                    self.file_list.append(tuple(os.path.join(directory, file) for file in csv_files))
-                    self.pairs_num += 1
+                    file_list.append(tuple(os.path.join(directory, file) for file in csv_files))
+                    pairs_num += 1
 
                 elif len(csv_files) == 1:
-                    self.file_list.append((os.path.join(directory, csv_files[0]),))
+                    file_list.append((os.path.join(directory, csv_files[0]),))
                 else:
                     for item in os.listdir(directory):
                         path = os.path.join(directory, item)
@@ -155,7 +164,7 @@ class MainApp:
                             recursive_search(path, depth + 1)
 
             recursive_search(self.target_dir.value, 0)
-            return(self.file_list, self.file_num, self.pairs_num)
+            return (file_list, file_num, pairs_num)
 
     def on_open_result_click(self, _: ft.ControlEvent):
         self.open_result()
@@ -252,7 +261,7 @@ class SpectrogramAnalysis:
     def export_config(self):
         return self.config["SpectrogramAnalysis"]
 
-    def build_result_ui(self):
+    def build_config_ui(self):
         self.text_area = ft.Text("設定項目") #設定項目：各解析内で固有に使う値（定数）
         self.val_area = ft.TextField(hint_text="int")
         x = ft.Container(ft.Row(self.text_area,self.val_area))
