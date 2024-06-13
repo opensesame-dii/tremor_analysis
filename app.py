@@ -253,15 +253,8 @@ class MainApp:
         self.page.window_always_on_top = True  # ウィンドウを最前面に固定
 
         self.build_ui()
-        t = ft.FilledTonalButton(text="run", on_click=self.on_run_click)
         self.setting_field()
-        page.controls.append(t)
         self.page.update()
-        run_button = ft.OutlinedButton(text="run", on_click=self.on_run_click)
-        read_button = ft.OutlinedButton(text="read", on_click=self.read_config_file)
-        write_button = ft.OutlinedButton(text="write", on_click=self.write_config_file)
-        y = ft.Container(content=ft.Column([run_button, read_button, write_button]))
-        page.add(y)
         page.update()
 
 
