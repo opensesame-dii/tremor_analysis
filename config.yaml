@@ -1,0 +1,9 @@
+key1: one
+key2: 3
+SpectrogramAnalysis:
+  max: 233
+  min: 3489
+
+fs:
+  max: 3
+  min: 1
