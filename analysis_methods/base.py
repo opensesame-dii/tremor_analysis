@@ -38,6 +38,7 @@ class AnalysisMethodBase(ABC):
         # 解析処理
         return {"value1": 1, "value2": 2}
 
+    @abstractmethod
     def configure_ui(self) -> ft.Control:
         """
         設定項目のUIを作る．
