@@ -13,7 +13,7 @@ class YamlFileHandler:
     def __init__(self, file_path: str):
         self.file_path = file_path
         self.content: dict[str, Any] = {}
-        if not os.path.isfile(self.file_path):
+        if not os.path.isfile(self.file_path):  # yamlファイルが無かったら新規作成
             self.export_yaml()
         self.content = self.import_yaml()
         # self.content の値は，dictになるようにアプリケーション側で制御
@@ -21,19 +21,24 @@ class YamlFileHandler:
     def import_yaml(self):
         """
         yamlファイルを読み込んで `self.content` に格納する
+        読み込む項目について、項目がyamlファイルに既に存在する場合、指定された値を読み取る
+        項目が存在しない場合、初期値を格納する
         """
         with open(self.file_path, "r") as file:
-            self.content = yaml.safe_load(file)
+            current_file_content: dict[str, Any] = yaml.safe_load(file)
+            for key in current_file_content.keys():
+                if key in self.content:
+                    self.content[key] = current_file_content[key]
             print("imported self.content:", self.content)  # 確認用
 
     def export_yaml(self):
         """
         `self.content` をyamlファイルに書き込む
         """
-
         with open(self.file_path, "w") as file:
             yaml.safe_dump(self.content, file)
+            print("exported self.content:", self.content)  # 確認用
 
 
 if __name__ == "__main__":
-    handler = YamlFileHandler("config.yaml")
+    YamlFileHandler("config.yaml")
