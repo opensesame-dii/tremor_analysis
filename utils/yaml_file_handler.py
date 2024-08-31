@@ -11,8 +11,10 @@ class YamlFileHandler:
     """
 
     def __init__(self, file_path: str):
+        content: dict[str, Any] = {}  # MainAppから受け取るように要変更
         self.file_path = file_path
         self.content: dict[str, Any] = {}
+        self.content: dict[str, Any] = content
         if not os.path.isfile(self.file_path):  # yamlファイルが無かったら新規作成
             self.export_yaml()
         self.content = self.import_yaml()
