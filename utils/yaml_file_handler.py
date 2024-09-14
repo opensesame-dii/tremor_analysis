@@ -51,6 +51,14 @@ class YamlFileHandler:
 
 
 if __name__ == "__main__":
-    file_path = "configa.yaml"  # 仮
-    content = {"key1": 1, "key3": 2}  # 仮
-    YamlFileHandler(file_path, content)
+    file_path = "configa.yaml"
+    content = {"key1": 1, "key3": 2}
+    yaml_file_handler = YamlFileHandler(file_path, content)
+    yaml_file_handler.content["key3"] = 3
+    yaml_file_handler.export_yaml()
+    with open(file_path, "r") as file:
+        for line in file.readlines():
+            print(line)
+    yaml_file_handler = YamlFileHandler(file_path, content)
+    print(yaml_file_handler.content)
+    os.remove(file_path)
