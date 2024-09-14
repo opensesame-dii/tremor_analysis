@@ -10,19 +10,19 @@ class AnalysisMethodBase(ABC):
     解析クラス
 
     Args:
-        config(Optional[dict[str, Any]]): 解析クラスで使う設定．
+        content(Optional[dict[str, Any]]): 解析クラスで使う設定．
             アプリ初回起動時は省略することで，デフォルト値が使われる．
     """
 
     @abstractmethod
     def __init__(
         self,
-        config: Optional[dict[str, Any]] = {
-            "param1": 1.0,  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
-            "param2": 2.0,
+        content: Optional[dict[str, Any]] = {
+            # "param1": 1.0,  # デフォルト値を書いておき，初回起動時のcontent作成に利用する
+            # "param2": 2.0,
         },
     ):
-        self.config = config
+        self.content = content
 
     @abstractmethod
     def run(self, data: np.ndarray) -> dict[str, Any]:
@@ -36,7 +36,7 @@ class AnalysisMethodBase(ABC):
             dict[str, Any]: 解析結果．項目名と値のdict
         """
         # 解析処理
-        return {"value1": 1, "value2": 2}
+        return self.result
 
     @abstractmethod
     def configure_ui(self) -> ft.Control:
@@ -53,9 +53,9 @@ class AnalysisMethodBase(ABC):
                 ft.Row(
                     [
                         ft.Text(key),
-                        ft.TextField(value=self.config[key]),
+                        ft.TextField(value=self.content[key]),
                     ]
                 )
-                for key in self.config.keys()
+                for key in self.content.keys()
             ]
         )
