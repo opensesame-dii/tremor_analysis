@@ -19,7 +19,7 @@ class SpectrogramAnalysis(AnalysisMethodBase):
             アプリ初回起動時は省略することで，デフォルト値が使われる．
 
     Params
-        fs: int/float
+        sampling_rate: int/float
             sampling rate
         nperseg: int
             sample number per stft segment
@@ -28,8 +28,10 @@ class SpectrogramAnalysis(AnalysisMethodBase):
     def __init__(
             self,
             content: Optional[dict[str, Any]] = {
-                "fs": 4.0,  # デフォルト値を書いておき，初回起動時のcontent作成に利用する
-                "nperseg": 4.0,     # TODO:この初期値によってエラーメッセージが変わる
+                "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のcontent作成に利用する
+                "nperseg": 512,
+                "min_frequency": 2,
+                "max_frequency": 20
             }
     ):
         super(SpectrogramAnalysis, self).__init__(content)
@@ -54,8 +56,8 @@ class SpectrogramAnalysis(AnalysisMethodBase):
 
         for i in range(3):
             # scipy
-            f, t, spec = spectrogram(detrend(data[i]),  # TODO:この辺でエラー
-                                     self.content["fs"],
+            f, t, spec = spectrogram(detrend(data[i]),
+                                     self.content["sampling_rate"],
                                      window=get_window("hamming",
                                                        int(
                                                            self.content[
@@ -70,8 +72,9 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         specs = np.array(self.specs)    # specs.shape: (3, 640, 527)
 
         # trim into frequency range
-        f_range = (np.array([self.min_f, self.max_f]) * len(f) * 2
-                   // self.sampling_rate)
+        f_range = (np.array([self.content["min_frequency"],
+                             self.content["max_frequency"]])
+                   * len(f) * 2 // self.content["sampling_rate"])
         specs = specs[:, f_range[0]: f_range[1], :]
         f = f[f_range[0]: f_range[1]]
 
@@ -83,9 +86,9 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         peak_freq = f[peak_idx[0][0]]
         peak_time = t[peak_idx[1][0]]
 
-        self.result: dict[str, Any] = {"peak_amp": peak_amp,
-                                       "peak_freq": peak_freq,
-                                       "peak_time": peak_time}
+        self.result: dict[str, Any] = {"peak_amp": peak_amp.item(),
+                                       "peak_freq": peak_freq.item(),
+                                       "peak_time": peak_time.item()}
         return super(SpectrogramAnalysis, self).run(data)
 
     def configure_ui(self) -> ft.Control:
@@ -102,7 +105,7 @@ class SpectrogramAnalysis(AnalysisMethodBase):
 
 if __name__ == "__main__":
     analysis = SpectrogramAnalysis()
-    data = np.array([[0, 1, 2],
-                     [3, 4, 5],
-                     [6, 7, 8]])
+    x = np.linspace(0, 10, 6000)
+    y = np.sin(x)
+    data = np.tile(y[np.newaxis, :], (3, 1))
     print(analysis.run(data))
