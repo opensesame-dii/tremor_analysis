@@ -89,7 +89,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
             "peak_freq": peak_freq.item(),
             "tsi": tsi,
         }
-        return super(PowerDensityAnalysis, self).run(data)
+        return result
 
     def configure_ui(self) -> ft.Control:
         """
