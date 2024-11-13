@@ -48,7 +48,7 @@ class AnalysisMethodBase(ABC):
                 それぞれのnp.ndarrayはshape=(axis, timestep)
 
         Returns:
-            AnalysisResult: 解析結果．項目名と値のdictと，画像の識別用の名前とpillowの画像オブジェクトのdict
+            AnalysisResult: 解析結果
         """
         # 解析処理
         return AnalysisResult(
