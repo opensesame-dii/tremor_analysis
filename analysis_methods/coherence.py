@@ -37,9 +37,8 @@ class CoherenceAnalysis(AnalysisMethodBase):
         解析を実行する
 
         Args:
-            data: list[np.ndarray(x1, x2)]:解析対象のデータ
-            x1(np.ndarray): 解析対象のデータ. shape=(axis, timestep)
-            x2(np.ndarray): 解析対象のデータ. shape=(axis, timestep)
+            data: list[np.ndarray]:解析対象のデータ
+
         Returns:
             dict[str, Any]: 解析結果．項目名と値のdict
         """
