@@ -1,3 +1,6 @@
+# https://github.com/opensesame-dii/tremor_analysis_python/blob/master/multiple_analysis/multiple.py#L733
+# power_density_analize関数に対応
+
 from typing import Any, Optional
 
 import flet as ft
@@ -10,9 +13,13 @@ from base import AnalysisMethodBase
 class PowerDensityAnalysis(AnalysisMethodBase):
     """
     Args:
-
+        content(Optional[dict[str, Any]]): 解析クラスで使う設定．
+            アプリ初回起動時は省略することで，デフォルト値が使われる．
     Params
-
+        sampling_rate: int/float
+            sampling rate
+        nperseg: int
+            sample number per stft segment
     """
     def __init__(
             self,
@@ -35,3 +42,57 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         Returns:
             dict[str, Any]: 解析結果．項目名と値のdict
         """
+        # 解析処理
+        self.specs = []
+        for i in range(3):
+            f, t, spec = spectrogram(
+                detrend(data[i]),
+                self.content["sampling_rate"],
+                window=get_window("hamming", int(self.content["nperseg"])),
+                nperseg=int(self.content["nperseg"]),
+                noverlap=int(self.content["nperseg"] * 0.75),
+                nfft=2**12,
+                mode="complex",
+            )  # scipy
+            self.specs.append(np.sum(np.power(np.abs(spec), 1), axis=1) / (len(t)))
+
+        # convert to 3-dimensional ndarray
+        specs = np.array(self.specs)    # specs.shape: (3, 640)
+
+        # trim into frequency range
+        f_range = np.array([self.min_f, self.max_f]) * len(f) * 2 // self.sampling_rate
+        specs = specs[:, f_range[0]: f_range[1]]
+        f = f[f_range[0]: f_range[1]]
+
+        # add norm
+        specs = np.append(specs, [np.linalg.norm(specs, axis=0)], axis=0)
+
+        peak_amp = np.max(specs[3])
+        peak_idx = np.where(specs[3] == peak_amp)
+        peak_freq = f[peak_idx[0][0]]
+        tsi = self.tremor_stability_index(data, self.content["sampling_rate"])
+
+        self.result = {
+            "peak_amp": peak_amp.item(),
+            "peak_freq": peak_freq.item(),
+            "tsi": tsi
+        }
+        return super(PowerDensityAnalysis, self).run(data)
+
+    def configure_ui(self) -> ft.Control:
+        """
+        設定項目のUIを作る．
+        補足: ft.Controlは，様々なUIの構成要素の基底クラス
+
+        Returns:
+            ft.Control: 設定項目のUI．
+        """
+        return super(PowerDensityAnalysis, self).configure_ui()
+
+
+if __name__ == "__main__":
+    analysis = PowerDensityAnalysis()
+    x = np.linspace(0, 10, 6000)
+    y = np.sin(x)
+    data = np.tile(y[np.newaxis, :], (3, 1))
+    print(analysis.run(data))
