@@ -15,7 +15,7 @@ from sklearn.decomposition import PCA
 class PowerDensityAnalysis(AnalysisMethodBase):
     """
     Args:
-        content(Optional[dict[str, Any]]): 解析クラスで使う設定．
+        config(Optional[dict[str, Any]]): 解析クラスで使う設定．
             アプリ初回起動時は省略することで，デフォルト値が使われる．
     Params
         sampling_rate: int/float
@@ -26,18 +26,18 @@ class PowerDensityAnalysis(AnalysisMethodBase):
 
     def __init__(
         self,
-        content: Optional[dict[str, Any]] = {
-            "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のcontent作成に利用する
+        config: Optional[dict[str, Any]] = {
+            "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
             "nperseg": 512,
             "min_frequency": 2,
             "max_frequency": 20,
         },
     ):
-        super(PowerDensityAnalysis, self).__init__(content)
+        super(PowerDensityAnalysis, self).__init__(config)
 
         # https://github.com/opensesame-dii/tremor_analysis_python/blob/master/multiple_analysis/multiple.py#L135
         self.sampling_rate = 200  # TODO: これと
-        self.segment_duration_sec = 5  # これは，self/contentから読み出すようにしたい
+        self.segment_duration_sec = 5  # これは，self/configから読み出すようにしたい
 
     def run(self, data: np.ndarray) -> dict[str, Any]:
         """
@@ -54,10 +54,10 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         for i in range(3):
             f, t, spec = spectrogram(
                 detrend(data[i]),
-                self.content["sampling_rate"],
-                window=get_window("hamming", int(self.content["nperseg"])),
-                nperseg=int(self.content["nperseg"]),
-                noverlap=int(self.content["nperseg"] * 0.75),
+                self.config["sampling_rate"],
+                window=get_window("hamming", int(self.config["nperseg"])),
+                nperseg=int(self.config["nperseg"]),
+                noverlap=int(self.config["nperseg"] * 0.75),
                 nfft=2**12,
                 mode="complex",
             )  # scipy
@@ -68,10 +68,10 @@ class PowerDensityAnalysis(AnalysisMethodBase):
 
         # trim into frequency range
         f_range = (
-            np.array([self.content["min_frequency"], self.content["max_frequency"]])
+            np.array([self.config["min_frequency"], self.config["max_frequency"]])
             * len(f)
             * 2
-            // self.content["sampling_rate"]
+            // self.config["sampling_rate"]
         )
         specs = specs[:, f_range[0] : f_range[1]]
         f = f[f_range[0] : f_range[1]]
@@ -82,7 +82,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         peak_amp = np.max(specs[3])
         peak_idx = np.where(specs[3] == peak_amp)
         peak_freq = f[peak_idx[0][0]]
-        tsi = self.tremor_stability_index(data, self.content["sampling_rate"])
+        tsi = self.tremor_stability_index(data, self.config["sampling_rate"])
 
         result = {
             "peak_amp": peak_amp.item(),
