@@ -14,6 +14,8 @@ class AnalysisMethodBase(ABC):
             アプリ初回起動時は省略することで，デフォルト値が使われる．
     """
 
+    ACCEPTABLE_DATA_COUNT: int = 1  # 実行時に受け取るべきデータの配列の数
+
     @abstractmethod
     def __init__(
         self,
@@ -25,12 +27,13 @@ class AnalysisMethodBase(ABC):
         self.config = config
 
     @abstractmethod
-    def run(self, data: np.ndarray) -> dict[str, Any]:
+    def run(self, data: list[np.ndarray]) -> dict[str, Any]:
         """
         解析を実行する．
 
         Args:
-            data(np.ndarray): 解析対象のデータ. shape=(axis, timestep)
+            data(list[np.ndarray]): 解析対象のデータ.
+                それぞれのnp.ndarrayはshape=(axis, timestep)
 
         Returns:
             dict[str, Any]: 解析結果．項目名と値のdict
