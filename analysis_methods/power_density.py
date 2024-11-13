@@ -24,6 +24,8 @@ class PowerDensityAnalysis(AnalysisMethodBase):
             sample number per stft segment
     """
 
+    ACCEPTABLE_DATA_COUNT: int = 1  # 実行時に受け取るべきデータの配列の数
+
     def __init__(
         self,
         content: Optional[dict[str, Any]] = {
@@ -39,18 +41,20 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         self.sampling_rate = 200  # TODO: これと
         self.segment_duration_sec = 5  # これは，self/contentから読み出すようにしたい
 
-    def run(self, data: np.ndarray) -> dict[str, Any]:
+    def run(self, data: list[np.ndarray]) -> dict[str, Any]:
         """
         解析を実行する．
 
         Args:
-            data(np.ndarray): 解析対象のデータ. shape=(axis, timestep)
+            data(list[np.ndarray]): 解析対象のデータ.
+                それぞれのnp.ndarrayはshape=(axis, timestep)
 
         Returns:
             dict[str, Any]: 解析結果．項目名と値のdict
         """
         # 解析処理
-        self.specs = []  # FIXME: self.にしない（プロパティとして保持する必要はない）
+        data = data[0]
+        specs = []
         for i in range(3):
             f, t, spec = spectrogram(
                 detrend(data[i]),
@@ -61,10 +65,10 @@ class PowerDensityAnalysis(AnalysisMethodBase):
                 nfft=2**12,
                 mode="complex",
             )  # scipy
-            self.specs.append(np.sum(np.power(np.abs(spec), 1), axis=1) / (len(t)))
+            specs.append(np.sum(np.power(np.abs(spec), 1), axis=1) / (len(t)))
 
         # convert to 3-dimensional ndarray
-        specs = np.array(self.specs)  # specs.shape: (3, 640)
+        specs = np.array(specs)  # specs.shape: (3, 640)
 
         # trim into frequency range
         f_range = (
@@ -164,5 +168,5 @@ if __name__ == "__main__":
     analysis = PowerDensityAnalysis()
     x = np.linspace(0, 10, 6000)
     y = np.sin(x)
-    data = np.tile(y[np.newaxis, :], (3, 1))
+    data = [np.tile(y[np.newaxis, :], (3, 1))]
     print(analysis.run(data))
