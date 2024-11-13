@@ -12,7 +12,7 @@ from base import AnalysisMethodBase
 class CoherenceAnalysis(AnalysisMethodBase):
     """
     Args:
-        content(Optional[dict[str, Any]]): 解析クラスで使う設定．
+        config(Optional[dict[str, Any]]): 解析クラスで使う設定．
             アプリ初回起動時は省略することで，デフォルト値が使われる．
 
     Params
@@ -24,13 +24,13 @@ class CoherenceAnalysis(AnalysisMethodBase):
 
     def __init__(
             self,
-            content: Optional[dict[str, Any]] = {
-                "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のcontent作成に利用する
+            config: Optional[dict[str, Any]] = {
+                "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
                 "min_frequency": 2,
                 "max_frequency": 20
             }
     ):
-        super(CoherenceAnalysis, self).__init__(content)
+        super(CoherenceAnalysis, self).__init__(config)
 
     def run(self, data: list[np.ndarray]) -> dict[str, Any]:
         """
@@ -51,7 +51,7 @@ class CoherenceAnalysis(AnalysisMethodBase):
             x2,
             x1,
             NFFT=nfft,
-            Fs=self.content["sampling_rate"],
+            Fs=self.config["sampling_rate"],
             window=window_hanning,
             noverlap=noverlap
         )   # matplotlib
