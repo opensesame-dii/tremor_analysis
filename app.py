@@ -68,6 +68,8 @@ class MainApp:
                 )  # 全ての解析手法が，runメソッドを持っていることを前提とする
             elif method.ACCEPTABLE_DATA_COUNT == 2:
                 method.run([data1, data2])
+            else:
+                raise NotImplementedError
 
     def on_run_click(self, e: ControlEvent):
         """Buttonのon_clickでは, 引数にControlEventが渡されるが，run()では不要のため, この関数でwrapしている
