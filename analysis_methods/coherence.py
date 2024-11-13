@@ -49,7 +49,7 @@ class CoherenceAnalysis(AnalysisMethodBase):
             x2,
             x1,
             NFFT=nfft,
-            Fs=self.config["sampling_rate"],
+            Fs=self.content["sampling_rate"],
             window=window_hanning,
             noverlap=noverlap
         )   # matplotlib
