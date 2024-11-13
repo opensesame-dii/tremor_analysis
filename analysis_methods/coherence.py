@@ -32,7 +32,7 @@ class CoherenceAnalysis(AnalysisMethodBase):
     ):
         super(CoherenceAnalysis, self).__init__(content)
 
-    def run(self, x1: np.ndarray, x2: np.ndarray) -> dict[str, Any]:
+    def run(self, data: np.ndarray) -> dict[str, Any]:
         """
         解析を実行する
 
@@ -43,6 +43,8 @@ class CoherenceAnalysis(AnalysisMethodBase):
             dict[str, Any]: 解析結果．項目名と値のdict
         """
         # 解析処理
+        x1 = data[0]  #適当
+        x2 = data[1]  #適当
         nfft = 2 ** 8
         noverlap = 2 ** 7
         Cyx, f = cohere(
@@ -71,7 +73,7 @@ class CoherenceAnalysis(AnalysisMethodBase):
         coh = np.sum(Cyx) * df
 
         self.result = {"coherence": coh}
-        return super(ConnectionAbortedError, self).run(x1, x2)
+        return super(CoherenceAnalysis, self).run(data)
 
     def configure_ui(self) -> ft.Control:
         """
@@ -86,9 +88,9 @@ class CoherenceAnalysis(AnalysisMethodBase):
 
 if __name__ == "__main__":
     analysis = CoherenceAnalysis()
-    x = np.linspace(0, 10, 6000)
-    y = np.sin(x)
-    # TODO: テスト用の適切なデータにする
-    x1 = np.tile(y[np.newaxis, :], (3, 1))
-    x2 = np.tile(y[np.newaxis, :], (3, 1))
-    print(analysis.run(x1, x2))
+    # TODO: テスト用の適切なデータにする,値はchatGPTに書いてもらった適当なやつ
+    sampling_rate = 1000  # 1kHz のサンプリングレート
+    t = np.arange(0, 1.0, 1.0 / sampling_rate)
+    data = [np.sin(2 * np.pi * 50 * t), np.sin(2 * np.pi * 80 * t)]
+
+    print(analysis.run(data))
