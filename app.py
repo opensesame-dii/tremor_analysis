@@ -67,6 +67,8 @@ class MainApp:
                     [data1]
                 )  # 全ての解析手法が，runメソッドを持っていることを前提とする
             elif method.ACCEPTABLE_DATA_COUNT == 2:
+                # 左右の手のデータペアを受け入れる解析
+                # TODO: データがペアで与えられなかった時の処理
                 method.run([data1, data2])
             else:
                 raise NotImplementedError
