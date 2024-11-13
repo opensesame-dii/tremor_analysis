@@ -36,8 +36,8 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         super(PowerDensityAnalysis, self).__init__(content)
 
         # https://github.com/opensesame-dii/tremor_analysis_python/blob/master/multiple_analysis/multiple.py#L135
-        self.sampling_rate = 200
-        self.segment_duration_sec = 5
+        self.sampling_rate = 200  # TODO: これと
+        self.segment_duration_sec = 5  # これは，self/contentから読み出すようにしたい
 
     def run(self, data: np.ndarray) -> dict[str, Any]:
         """
@@ -50,7 +50,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
             dict[str, Any]: 解析結果．項目名と値のdict
         """
         # 解析処理
-        self.specs = []
+        self.specs = []  # FIXME: self.にしない（プロパティとして保持する必要はない）
         for i in range(3):
             f, t, spec = spectrogram(
                 detrend(data[i]),
