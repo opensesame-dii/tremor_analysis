@@ -56,25 +56,24 @@ class SpectrogramAnalysis(AnalysisMethodBase):
 
         for i in range(3):
             # scipy
-            f, t, spec = spectrogram(detrend(data[i]),
-                                     self.content["sampling_rate"],
-                                     window=get_window("hamming",
-                                                       int(
-                                                           self.content[
-                                                               "nperseg"])),
-                                     nperseg=int(self.content["nperseg"]),
-                                     noverlap=noverlap,
-                                     nfft=2**12,
-                                     mode="magnitude", )
+            f, t, spec = spectrogram(
+                detrend(data[i]),
+                self.content["sampling_rate"],
+                window=get_window("hamming", int(self.content["nperseg"])),
+                nperseg=int(self.content["nperseg"]),
+                noverlap=noverlap,
+                nfft=2**12,
+                mode="magnitude",
+            )
             self.specs.append(np.abs(spec))
 
         # convert to 3-dimensional ndarray
         specs = np.array(self.specs)    # specs.shape: (3, 640, 527)
 
         # trim into frequency range
-        f_range = (np.array([self.content["min_frequency"],
-                             self.content["max_frequency"]])
-                   * len(f) * 2 // self.content["sampling_rate"])
+        f_range = (
+            np.array([self.content["min_frequency"], self.content["max_frequency"]]) * len(f) * 2 // self.content["sampling_rate"]
+        )
         specs = specs[:, f_range[0]: f_range[1], :]
         f = f[f_range[0]: f_range[1]]
 
@@ -86,9 +85,11 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         peak_freq = f[peak_idx[0][0]]
         peak_time = t[peak_idx[1][0]]
 
-        self.result: dict[str, Any] = {"peak_amp": peak_amp.item(),
-                                       "peak_freq": peak_freq.item(),
-                                       "peak_time": peak_time.item()}
+        self.result: dict[str, Any] = {
+            "peak_amp": peak_amp.item(),
+            "peak_freq": peak_freq.item(),
+            "peak_time": peak_time.item()
+        }
         return super(SpectrogramAnalysis, self).run(data)
 
     def configure_ui(self) -> ft.Control:
