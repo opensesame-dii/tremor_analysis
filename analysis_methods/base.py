@@ -14,7 +14,7 @@ class AnalysisMethodBase(ABC):
             アプリ初回起動時は省略することで，デフォルト値が使われる．
     """
 
-    ACCEPTABLE_DATA_COUNT = 1  # 実行時に受け取るべきデータの配列の数
+    ACCEPTABLE_DATA_COUNT: int = 1  # 実行時に受け取るべきデータの配列の数
 
     @abstractmethod
     def __init__(
