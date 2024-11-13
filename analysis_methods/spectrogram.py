@@ -25,6 +25,8 @@ class SpectrogramAnalysis(AnalysisMethodBase):
             sample number per stft segment
     """
 
+    ACCEPTABLE_DATA_COUNT: int = 1  # 実行時に受け取るべきデータの配列の数
+
     def __init__(
             self,
             content: Optional[dict[str, Any]] = {
@@ -36,17 +38,19 @@ class SpectrogramAnalysis(AnalysisMethodBase):
     ):
         super(SpectrogramAnalysis, self).__init__(content)
 
-    def run(self, data: np.ndarray) -> dict[str, Any]:
+    def run(self, data: list[np.ndarray]) -> dict[str, Any]:
         """
         解析を実行する．
 
         Args:
-            data(np.ndarray): 解析対象のデータ. shape=(axis, timestep)
+            data(list[np.ndarray]): 解析対象のデータ.
+                それぞれのnp.arrayはshape=(axis, timestep)
 
         Returns:
             dict[str, Any]: 解析結果．項目名と値のdict
         """
         # 解析処理
+        data = data[0]
         self.specs = []
         x_length = len(data[0])
         nTimesSpectrogram = 500
@@ -108,5 +112,5 @@ if __name__ == "__main__":
     analysis = SpectrogramAnalysis()
     x = np.linspace(0, 10, 6000)
     y = np.sin(x)
-    data = np.tile(y[np.newaxis, :], (3, 1))
+    data = [np.tile(y[np.newaxis, :], (3, 1))]
     print(analysis.run(data))
