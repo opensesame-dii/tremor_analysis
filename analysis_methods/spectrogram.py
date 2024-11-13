@@ -85,12 +85,12 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         peak_freq = f[peak_idx[0][0]]
         peak_time = t[peak_idx[1][0]]
 
-        self.result: dict[str, Any] = {
+        result: dict[str, Any] = {
             "peak_amp": peak_amp.item(),
             "peak_freq": peak_freq.item(),
             "peak_time": peak_time.item()
         }
-        return super(SpectrogramAnalysis, self).run(data)
+        return result
 
     def configure_ui(self) -> ft.Control:
         """
