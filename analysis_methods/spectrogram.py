@@ -15,7 +15,7 @@ class SpectrogramAnalysis(AnalysisMethodBase):
     振動の解析クラス
 
     Args:
-        content(Optional[dict[str, Any]]): 解析クラスで使う設定．
+        config(Optional[dict[str, Any]]): 解析クラスで使う設定．
             アプリ初回起動時は省略することで，デフォルト値が使われる．
 
     Params
@@ -29,14 +29,14 @@ class SpectrogramAnalysis(AnalysisMethodBase):
 
     def __init__(
             self,
-            content: Optional[dict[str, Any]] = {
-                "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のcontent作成に利用する
+            config: Optional[dict[str, Any]] = {
+                "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
                 "nperseg": 512,
                 "min_frequency": 2,
                 "max_frequency": 20
             }
     ):
-        super(SpectrogramAnalysis, self).__init__(content)
+        super(SpectrogramAnalysis, self).__init__(config)
 
     def run(self, data: list[np.ndarray]) -> dict[str, Any]:
         """
@@ -51,10 +51,10 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         """
         # 解析処理
         data = data[0]
-        self.specs = []
+        specs = []
         x_length = len(data[0])
         nTimesSpectrogram = 500
-        L = np.min((x_length, self.content["nperseg"]))
+        L = np.min((x_length, self.config["nperseg"]))
         noverlap = np.ceil(L - (x_length - L) / (nTimesSpectrogram - 1))
         noverlap = int(np.max((1, noverlap)))
 
@@ -62,21 +62,21 @@ class SpectrogramAnalysis(AnalysisMethodBase):
             # scipy
             f, t, spec = spectrogram(
                 detrend(data[i]),
-                self.content["sampling_rate"],
-                window=get_window("hamming", int(self.content["nperseg"])),
-                nperseg=int(self.content["nperseg"]),
+                self.config["sampling_rate"],
+                window=get_window("hamming", int(self.config["nperseg"])),
+                nperseg=int(self.config["nperseg"]),
                 noverlap=noverlap,
                 nfft=2**12,
                 mode="magnitude",
             )
-            self.specs.append(np.abs(spec))
+            specs.append(np.abs(spec))
 
         # convert to 3-dimensional ndarray
-        specs = np.array(self.specs)    # specs.shape: (3, 640, 527)
+        specs = np.array(specs)    # specs.shape: (3, 640, 527)
 
         # trim into frequency range
         f_range = (
-            np.array([self.content["min_frequency"], self.content["max_frequency"]]) * len(f) * 2 // self.content["sampling_rate"]
+            np.array([self.config["min_frequency"], self.config["max_frequency"]]) * len(f) * 2 // self.config["sampling_rate"]
         )
         specs = specs[:, f_range[0]: f_range[1], :]
         f = f[f_range[0]: f_range[1]]
