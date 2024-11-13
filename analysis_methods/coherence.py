@@ -5,9 +5,7 @@ from typing import Any, Optional
 
 import flet as ft
 import numpy as np
-# from scipy.signal import detrend, spectrogram, get_window
 from matplotlib.mlab import cohere, window_hanning
-# from analysis_methods.base import AnalysisMethodBase
 from base import AnalysisMethodBase
 
 
@@ -22,6 +20,8 @@ class CoherenceAnalysis(AnalysisMethodBase):
             sampling rate
     """
 
+    ACCEPTABLE_DATA_COUNT: int = 2
+
     def __init__(
             self,
             content: Optional[dict[str, Any]] = {
@@ -32,19 +32,20 @@ class CoherenceAnalysis(AnalysisMethodBase):
     ):
         super(CoherenceAnalysis, self).__init__(content)
 
-    def run(self, data: np.ndarray) -> dict[str, Any]:
+    def run(self, data: list[np.ndarray]) -> dict[str, Any]:
         """
         解析を実行する
 
         Args:
+            data: list[np.ndarray(x1, x2)]:解析対象のデータ
             x1(np.ndarray): 解析対象のデータ. shape=(axis, timestep)
             x2(np.ndarray): 解析対象のデータ. shape=(axis, timestep)
         Returns:
             dict[str, Any]: 解析結果．項目名と値のdict
         """
         # 解析処理
-        x1 = data[0]  #適当
-        x2 = data[1]  #適当
+        x1 = data[0]
+        x2 = data[1]
         nfft = 2 ** 8
         noverlap = 2 ** 7
         Cyx, f = cohere(
@@ -66,14 +67,11 @@ class CoherenceAnalysis(AnalysisMethodBase):
 
         l = (len(x1) - noverlap) // (nfft - noverlap)
         z = 1 - np.power(0.05, 1 / (l - 1))
-        # print("z: ", z)
-        # print("significant points rate: ", len(Cyx[Cyx >= z]) / len(Cyx)) # 有意な値の割合
         Cyx = Cyx[Cyx >= z]
-        # print(Cyx)
         coh = np.sum(Cyx) * df
 
-        self.result = {"coherence": coh}
-        return super(CoherenceAnalysis, self).run(data)
+        result = {"coherence": coh}
+        return result
 
     def configure_ui(self) -> ft.Control:
         """
@@ -88,7 +86,7 @@ class CoherenceAnalysis(AnalysisMethodBase):
 
 if __name__ == "__main__":
     analysis = CoherenceAnalysis()
-    # TODO: テスト用の適切なデータにする,値はchatGPTに書いてもらった適当なやつ
+    # TODO: テスト用の適切なデータにする,今はchatGPTに書いてもらった適当なやつ
     sampling_rate = 1000  # 1kHz のサンプリングレート
     t = np.arange(0, 1.0, 1.0 / sampling_rate)
     data = [np.sin(2 * np.pi * 50 * t), np.sin(2 * np.pi * 80 * t)]
