@@ -10,27 +10,30 @@ class AnalysisMethodBase(ABC):
     解析クラス
 
     Args:
-        config(Optional[dict[str, Any]]): 解析クラスで使う設定．
+        content(Optional[dict[str, Any]]): 解析クラスで使う設定．
             アプリ初回起動時は省略することで，デフォルト値が使われる．
     """
+
+    ACCEPTABLE_DATA_COUNT: int = 1  # 実行時に受け取るべきデータの配列の数
 
     @abstractmethod
     def __init__(
         self,
-        config: Optional[dict[str, Any]] = {
-            "param1": 1.0,  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
+        content: Optional[dict[str, Any]] = {
+            "param1": 1.0,  # デフォルト値を書いておき，初回起動時のcontent作成に利用する
             "param2": 2.0,
         },
     ):
-        self.config = config
+        self.content = content
 
     @abstractmethod
-    def run(self, data: np.ndarray) -> dict[str, Any]:
+    def run(self, data: list[np.ndarray]) -> dict[str, Any]:
         """
         解析を実行する．
 
         Args:
-            data(np.ndarray): 解析対象のデータ. shape=(axis, timestep)
+            data(list[np.ndarray]): 解析対象のデータ.
+                それぞれのnp.ndarrayはshape=(axis, timestep)
 
         Returns:
             dict[str, Any]: 解析結果．項目名と値のdict
@@ -53,9 +56,9 @@ class AnalysisMethodBase(ABC):
                 ft.Row(
                     [
                         ft.Text(key),
-                        ft.TextField(value=self.config[key]),
+                        ft.TextField(value=self.content[key]),
                     ]
                 )
-                for key in self.config.keys()
+                for key in self.content.keys()
             ]
         )
