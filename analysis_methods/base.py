@@ -36,7 +36,7 @@ class AnalysisMethodBase(ABC):
             dict[str, Any]: 解析結果．項目名と値のdict
         """
         # 解析処理
-        return {"value1": 1, "value2": 2}
+        return self.result
 
     @abstractmethod
     def configure_ui(self) -> ft.Control:
