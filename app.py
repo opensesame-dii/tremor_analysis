@@ -38,12 +38,14 @@ from scipy.signal import (
 )
 from sklearn.decomposition import PCA
 
+from analysis_methods.base import AnalysisMethodBase
+
 use("TkAgg")
 
 
 class MainApp:
     def __init__(self) -> None:
-        self.analysis_methods = [
+        self.analysis_methods: list[AnalysisMethodBase] = [
             SpectrogramAnalysis(),  # ここで解析手法のクラスをインスタンス化
             # 他の解析手法もここに追加
         ]
@@ -60,7 +62,12 @@ class MainApp:
                 writer.writerows(data)
             print("file created")
         for method in self.analysis_methods:
-            method.run()  # 全ての解析手法が，runメソッドを持っていることを前提とする
+            if method.ACCEPTABLE_DATA_COUNT == 1:
+                method.run(
+                    [data1]
+                )  # 全ての解析手法が，runメソッドを持っていることを前提とする
+            elif method.ACCEPTABLE_DATA_COUNT == 2:
+                method.run([data1, data2])
 
     def on_run_click(self, e: ControlEvent):
         """Buttonのon_clickでは, 引数にControlEventが渡されるが，run()では不要のため, この関数でwrapしている
