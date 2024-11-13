@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from PIL import Image
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import dataclasses
 import flet as ft
