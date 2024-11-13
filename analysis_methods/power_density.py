@@ -5,11 +5,11 @@ from typing import Any, Optional
 
 import flet as ft
 import numpy as np
-from scipy.signal import detrend, spectrogram, get_window, butter, sosfilt
-from sklearn.decomposition import PCA
 
 # from analysis_methods.base import AnalysisMethodBase
 from base import AnalysisMethodBase
+from scipy.signal import butter, detrend, get_window, sosfilt, spectrogram
+from sklearn.decomposition import PCA
 
 
 class PowerDensityAnalysis(AnalysisMethodBase):
@@ -23,14 +23,15 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         nperseg: int
             sample number per stft segment
     """
+
     def __init__(
-            self,
-            content: Optional[dict[str, Any]] = {
-                "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のcontent作成に利用する
-                "nperseg": 512,
-                "min_frequency": 2,
-                "max_frequency": 20
-            }
+        self,
+        content: Optional[dict[str, Any]] = {
+            "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のcontent作成に利用する
+            "nperseg": 512,
+            "min_frequency": 2,
+            "max_frequency": 20,
+        },
     ):
         super(PowerDensityAnalysis, self).__init__(content)
 
@@ -63,12 +64,17 @@ class PowerDensityAnalysis(AnalysisMethodBase):
             self.specs.append(np.sum(np.power(np.abs(spec), 1), axis=1) / (len(t)))
 
         # convert to 3-dimensional ndarray
-        specs = np.array(self.specs)    # specs.shape: (3, 640)
+        specs = np.array(self.specs)  # specs.shape: (3, 640)
 
         # trim into frequency range
-        f_range = np.array([self.content["min_frequency"], self.content["max_frequency"]]) * len(f) * 2 // self.content["sampling_rate"]
-        specs = specs[:, f_range[0]: f_range[1]]
-        f = f[f_range[0]: f_range[1]]
+        f_range = (
+            np.array([self.content["min_frequency"], self.content["max_frequency"]])
+            * len(f)
+            * 2
+            // self.content["sampling_rate"]
+        )
+        specs = specs[:, f_range[0] : f_range[1]]
+        f = f[f_range[0] : f_range[1]]
 
         # add norm
         specs = np.append(specs, [np.linalg.norm(specs, axis=0)], axis=0)
@@ -78,10 +84,10 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         peak_freq = f[peak_idx[0][0]]
         tsi = self.tremor_stability_index(data, self.content["sampling_rate"])
 
-        self.result = {
+        result = {
             "peak_amp": peak_amp.item(),
             "peak_freq": peak_freq.item(),
-            "tsi": tsi
+            "tsi": tsi,
         }
         return super(PowerDensityAnalysis, self).run(data)
 
@@ -107,7 +113,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
             sampling rate
         """
         # highpass filter
-        sos = butter(N=3, Wn=0.1, btype="highpass", fs=fs, output='sos')
+        sos = butter(N=3, Wn=0.1, btype="highpass", fs=fs, output="sos")
         data = sosfilt(sos, data, axis=0)
 
         # principal component analysis
@@ -122,26 +128,30 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         noverlap = int(np.max((1, noverlap)))
         amplitude_spectrum = np.abs(np.fft.fft(x))
         freqs = np.fft.fftfreq(len(x), d=1 / fs)
-        max_freq = freqs[np.argmax(amplitude_spectrum[:len(x) // 2])]
+        max_freq = freqs[np.argmax(amplitude_spectrum[: len(x) // 2])]
 
-        if (max_freq <= 2):
-            max_freq = 2.001    # to create bandpass filter, max_freq - 2 maust be larger than 0
-        elif (max_freq > 9):
+        if max_freq <= 2:
+            max_freq = (
+                2.001  # to create bandpass filter, max_freq - 2 maust be larger than 0
+            )
+        elif max_freq > 9:
             max_freq = 9
 
-        sos = butter(N=3, Wn=(max_freq - 2, max_freq + 2), btype="bandpass", fs=fs, output='sos')
+        sos = butter(
+            N=3, Wn=(max_freq - 2, max_freq + 2), btype="bandpass", fs=fs, output="sos"
+        )
         x = sosfilt(sos, x, axis=0)
 
         idx = 1
         zero_crossing = np.empty(0)
-        while (idx < length):
-            if (x[idx - 1] < 0 and x[idx] >= 0):
+        while idx < length:
+            if x[idx - 1] < 0 and x[idx] >= 0:
                 zero_crossing = np.append(zero_crossing, idx)
             idx += 1
 
         f = fs / np.diff(np.array(zero_crossing))
         delta_f = np.diff(f)
-        if (len(delta_f) == 0):
+        if len(delta_f) == 0:
             q75, q25 = 0, 0
         else:
             q75, q25 = np.percentile(delta_f, [75, 25], interpolation="nearest")
