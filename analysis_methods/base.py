@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from PIL import Image
+from typing import Any, Optional, Union
 
+import dataclasses
 import flet as ft
 import numpy as np
 from dataclasses import dataclass
@@ -10,6 +12,16 @@ from dataclasses import dataclass
 class AnalysisResult:
     numerical_result: dict[str, Any]
     image_result: dict[str, Any]
+
+
+@dataclasses.dataclass
+class AnalysisResult:
+    """
+    解析結果のデータを格納するクラス
+    解析結果の数値データと画像データを，それぞれの項目名をキーとするdictに格納する
+    """
+    numerical_result: dict[str, Union[int, float]]
+    image_result: dict[str, Image.Image]
 
 
 class AnalysisMethodBase(ABC):
@@ -34,7 +46,7 @@ class AnalysisMethodBase(ABC):
         self.config = config
 
     @abstractmethod
-    def run(self, data: list[np.ndarray]) -> dict[str, Any]:
+    def run(self, data: list[np.ndarray]) -> AnalysisResult:
         """
         解析を実行する．
 
@@ -43,10 +55,13 @@ class AnalysisMethodBase(ABC):
                 それぞれのnp.ndarrayはshape=(axis, timestep)
 
         Returns:
-            dict[str, Any]: 解析結果．項目名と値のdict
+            AnalysisResult: 解析結果
         """
         # 解析処理
-        return {"value1": 1, "value2": 2}
+        return AnalysisResult(
+            numerical_result={"value1": 1, "value2": 2},
+            image_result={"image1": Image.new("RGB", (1, 1))}
+        )
 
     @abstractmethod
     def configure_ui(self) -> ft.Control:
