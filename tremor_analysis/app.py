@@ -3,6 +3,7 @@ import os
 import platform
 import subprocess
 from typing import Any
+import numpy as np
 
 import flet as ft
 import yaml
