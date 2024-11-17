@@ -19,13 +19,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import yaml
+from analysis_methods.base import AnalysisMethodBase
 from flet import ControlEvent
-from matplotlib import backend_tools as cbook
-from matplotlib import use
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from matplotlib.figure import Figure
-from matplotlib.mlab import cohere, window_hanning
-from matplotlib.pyplot import specgram as pltspectrogram
 from scipy.signal import (
     butter,
     cwt,
@@ -37,10 +32,6 @@ from scipy.signal import (
     spectrogram,
 )
 from sklearn.decomposition import PCA
-
-from analysis_methods.base import AnalysisMethodBase
-
-use("TkAgg")
 
 
 class MainApp:
@@ -303,6 +294,10 @@ class SpectrogramAnalysis:
         print("test")
 
 
-if __name__ == "__main__":
+def main():
     app = MainApp()
     ft.app(target=app.main)
+
+
+if __name__ == "__main__":
+    main()
