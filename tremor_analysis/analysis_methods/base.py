@@ -13,6 +13,7 @@ class AnalysisResult:
     解析結果のデータを格納するクラス
     解析結果の数値データと画像データを，それぞれの項目名をキーとするdictに格納する
     """
+
     numerical_result: dict[str, Union[int, float]]
     image_result: dict[str, Image.Image]
 
@@ -37,12 +38,12 @@ class AnalysisMethodBase(ABC):
 
     config = [
         ConfigParameter(
-            name="param1",  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
+            name="param1 (Hz)",  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
             value=1.0,
             type=float,
         ),
         ConfigParameter(
-            name="param2",  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
+            name="param2 (sec)",  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
             value=2,
             type=int,
         ),
@@ -53,8 +54,11 @@ class AnalysisMethodBase(ABC):
         self,
         config: Optional[list[ConfigParameter]] = None,
     ):
-        if config is None:
-            self.config = config
+        if config is not None:
+            name_to_item = {item.name: item for item in self.config}
+            for item in config:
+                name_to_item[item.name] = item
+            self.config = list(name_to_item.values())
 
     @abstractmethod
     def run(self, data: list[np.ndarray]) -> AnalysisResult:
@@ -71,7 +75,7 @@ class AnalysisMethodBase(ABC):
         # 解析処理
         return AnalysisResult(
             numerical_result={"value1": 1, "value2": 2},
-            image_result={"image1": Image.new("RGB", (1, 1))}
+            image_result={"image1": Image.new("RGB", (1, 1))},
         )
 
     def configure_ui(self) -> ft.Control:
@@ -86,11 +90,15 @@ class AnalysisMethodBase(ABC):
         self.configure_ui_components = {}
         column = []
         for config_entry in self.config:
-            self.configure_ui_components[config_entry.name] = ft.TextField(value=config_entry.value)  # TODO: TextFieldWithTypeに置き換え
+            self.configure_ui_components[config_entry.name] = ft.TextField(
+                value=config_entry.value
+            )  # TODO: TextFieldWithTypeに置き換え
             column += [
                 ft.Row(
-                    ft.Text(config_entry.name),
-                    self.configure_ui_components[config_entry.name],
+                    [
+                        ft.Text(config_entry.name),
+                        self.configure_ui_components[config_entry.name],
+                    ]
                 ),
             ]
 
