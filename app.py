@@ -75,7 +75,6 @@ class MainApp:
             with open(self.output_file, "w") as file:
                 writer = csv.writer(file)
                 for key, value in result.numerical_result.items():
-                    print("numerical:", result.numerical_result)
                     writer.writerows([[key, value]])
             self.output_image_file = os.path.join(self.target_dir.value, "image.png")
             for key, image in result.image_result.items():
@@ -90,10 +89,6 @@ class MainApp:
             e (ControlEvent): click event
         """
         self.run()
-
-    # def setting_field(self):
-    #     for setting in self.analysis_methods:
-    #         setting.build_result_ui
 
     def read_config_file(self, e: ControlEvent):
         with open("config.yaml") as file:
@@ -274,7 +269,6 @@ class MainApp:
         self.page.window_always_on_top = True  # ウィンドウを最前面に固定
 
         self.build_ui()
-        # self.setting_field()
         self.page.update()
         page.update()
 
