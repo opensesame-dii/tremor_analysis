@@ -1,36 +1,12 @@
 import csv
-import datetime
 import os
 import platform
 import subprocess
-import tkinter as tk
-from argparse import ArgumentParser
-from cgitb import text
-from copy import copy, deepcopy
-from io import BytesIO
-from logging import root, warning
-from re import S
-from sys import exit
-from tkinter import filedialog, ttk
 from typing import Any
 
 import flet as ft
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import yaml
 from flet import ControlEvent
-from scipy.signal import (
-    butter,
-    cwt,
-    detrend,
-    get_window,
-    hamming,
-    morlet2,
-    sosfilt,
-    spectrogram,
-)
-from sklearn.decomposition import PCA
 
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase
 
