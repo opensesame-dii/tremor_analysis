@@ -3,6 +3,12 @@ from typing import Any, Optional
 
 import flet as ft
 import numpy as np
+from dataclasses import dataclass
+
+@dataclass
+class AnalysisResult:
+    numerical_result: dict[str, Any]
+    image_result: dict[str, Any]
 
 
 class AnalysisMethodBase(ABC):
