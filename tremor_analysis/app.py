@@ -1,5 +1,4 @@
 import csv
-import itertools
 import os
 import platform
 import subprocess
@@ -142,6 +141,18 @@ class MainApp:
             subprocess.Popen(["xdg-open", self.target_dir.value])
         return
 
+    def on_apply_click(self, _: ft.ControlEvent):
+        self.apply()
+
+    # apply settings
+    def apply(self):
+        for method in self.analysis_methods:
+            for config, ui_component in zip(
+                method.config, method.configure_ui_components.values()
+            ):
+                if ui_component.value != "" and ui_component.value != config.value:
+                    config.value = ui_component.value
+
     def build_ui(self):
         self.folder_picker = ft.FilePicker(on_result=self.on_folder_picked)
         self.page.overlay.append(self.folder_picker)
@@ -156,7 +167,12 @@ class MainApp:
         open_result_button = ft.OutlinedButton(
             text="Open Result", on_click=self.on_open_result_click
         )
-        apply_button = ft.OutlinedButton(text="Apply&Save Settings", on_click="")
+        apply_button = ft.OutlinedButton(
+            text="Apply&Save Settings",
+            on_click=self.on_apply_click,
+            # text="Apply&Save Settings",
+            # on_click="",
+        )
         settings = ft.Container(
             content=ft.Column(
                 [

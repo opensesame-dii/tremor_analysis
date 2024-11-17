@@ -33,7 +33,7 @@ class DummyAnalysisCapableTwoData(AnalysisMethodBase):
     ACCEPTABLE_DATA_COUNT = 2
     config = [
         ConfigParameter(name="min_frequency (Hz, int)", value=2, type=int),
-        ConfigParameter(name="min_frequency (Hz, int)", value=20, type=int),
+        ConfigParameter(name="max_frequency (Hz, int)", value=20, type=int),
     ]
 
     def __init__(
