@@ -39,6 +39,7 @@ from scipy.signal import (
 from sklearn.decomposition import PCA
 
 from analysis_methods.base import AnalysisMethodBase
+from analysis_methods.dummy import DummyAnalysis
 
 use("TkAgg")
 
@@ -46,7 +47,8 @@ use("TkAgg")
 class MainApp:
     def __init__(self) -> None:
         self.analysis_methods: list[AnalysisMethodBase] = [
-            SpectrogramAnalysis(),  # ここで解析手法のクラスをインスタンス化
+            # SpectrogramAnalysis(),
+            DummyAnalysis(), # ここで解析手法のクラスをインスタンス化
             # 他の解析手法もここに追加
         ]
         self.target_dir = ft.Text(value="Not Selected")
