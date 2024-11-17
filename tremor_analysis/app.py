@@ -7,7 +7,6 @@ from typing import Any
 import flet as ft
 import yaml
 from flet import ControlEvent
-
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase
 
 

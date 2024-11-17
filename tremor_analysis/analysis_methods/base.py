@@ -1,10 +1,10 @@
-from abc import ABC, abstractmethod
-from PIL import Image
-from typing import Any, Optional, Union
-
 import dataclasses
+from abc import ABC, abstractmethod
+from typing import Any, Optional, Type, Union
+
 import flet as ft
 import numpy as np
+from PIL import Image
 
 
 @dataclasses.dataclass
@@ -17,26 +17,44 @@ class AnalysisResult:
     image_result: dict[str, Image.Image]
 
 
+@dataclasses.dataclass
+class ConfigParameter:
+    name: str
+    value: Any
+    type: Union[Type[int], Type[float]]
+
+
 class AnalysisMethodBase(ABC):
     """
     解析クラス
 
     Args:
-        config(Optional[dict[str, Any]]): 解析クラスで使う設定．
+        config(Optional[list[ConfigParameter]]): 解析クラスで使う設定．
             アプリ初回起動時は省略することで，デフォルト値が使われる．
     """
 
     ACCEPTABLE_DATA_COUNT: int = 1  # 実行時に受け取るべきデータの配列の数
 
+    config = [
+        ConfigParameter(
+            name="param1",  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
+            value=1.0,
+            type=float,
+        ),
+        ConfigParameter(
+            name="param2",  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
+            value=2,
+            type=int,
+        ),
+    ]
+
     @abstractmethod
     def __init__(
         self,
-        config: Optional[dict[str, Any]] = {
-            "param1": 1.0,  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
-            "param2": 2.0,
-        },
+        config: Optional[list[ConfigParameter]] = None,
     ):
-        self.config = config
+        if config is None:
+            self.config = config
 
     @abstractmethod
     def run(self, data: list[np.ndarray]) -> AnalysisResult:
@@ -56,7 +74,6 @@ class AnalysisMethodBase(ABC):
             image_result={"image1": Image.new("RGB", (1, 1))}
         )
 
-    @abstractmethod
     def configure_ui(self) -> ft.Control:
         """
         設定項目のUIを作る．
@@ -66,14 +83,15 @@ class AnalysisMethodBase(ABC):
             ft.Control: 設定項目のUI．
 
         """
-        return ft.Column(
-            [
+        self.configure_ui_components = {}
+        column = []
+        for config_entry in self.config:
+            self.configure_ui_components[config_entry.name] = ft.TextField(value=config_entry.value)  # TODO: TextFieldWithTypeに置き換え
+            column += [
                 ft.Row(
-                    [
-                        ft.Text(key),
-                        ft.TextField(value=self.config[key]),
-                    ]
-                )
-                for key in self.config.keys()
+                    ft.Text(config_entry.name),
+                    self.configure_ui_components[config_entry.name],
+                ),
             ]
-        )
+
+        return ft.Column(column)
