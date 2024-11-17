@@ -2,15 +2,17 @@ import csv
 import os
 import platform
 import subprocess
+from pathlib import Path
 from typing import Any
-import numpy as np
 
 import flet as ft
+import numpy as np
 import yaml
 from flet import ControlEvent
 
+from tremor_analysis.analysis_methods.base import AnalysisMethodBase, AnalysisResult
 from tremor_analysis.analysis_methods.dummy import DummyAnalysis
-from tremor_analysis.analysis_methods.base import AnalysisMethodBase
+from tremor_analysis.utils.path import remove_extension
 
 
 class MainApp:
@@ -22,34 +24,57 @@ class MainApp:
         ]
         self.target_dir = ft.Text(value="Not Selected")
         self.log_content = ft.Text()
+        self.file_num = 0
+        self.pairs_num = 0
 
     def run(self):
-        # ここでscan()も呼ぶべきかも(20240225ミーティングより)
+        file_list = self.scan()
         data1 = np.zeros((10, 10))  # 仮
         data2 = np.zeros((20, 20))
+        data = [data1, data2]
 
-        for method in self.analysis_methods:
-            if method.ACCEPTABLE_DATA_COUNT == 1:
-                result = method.run(
-                    [data1]
-                )  # 全ての解析手法が，runメソッドを持っていることを前提とする
-            elif method.ACCEPTABLE_DATA_COUNT == 2:
-                # 左右の手のデータペアを受け入れる解析
-                # TODO: データがペアで与えられなかった時の処理
-                method.run([data1, data2])
+        for file_pair in file_list:
+            # TODO: ファイル読み込み
+            if len(file_pair) == 1:
+                # TODO: dataとして読み込み data = [data1]
+                pass
+            elif len(file_pair) == 2:
+                # TODO: dataとして読み込み data = [data1, data2]
+                pass
             else:
                 raise NotImplementedError
-        if self.target_dir:
-            self.output_file = os.path.join(self.target_dir.value, "result.tremor.csv")
-            with open(self.output_file, "w") as file:
-                writer = csv.writer(file)
-                for key, value in result.numerical_result.items():
-                    writer.writerows([[key, value]])
-            self.output_image_file = os.path.join(self.target_dir.value, "image.png")
-            for key, image in result.image_result.items():
-                image.save(self.output_image_file)
 
-            print("file created")
+            for method in self.analysis_methods:
+                if method.ACCEPTABLE_DATA_COUNT == 1:
+                    for i, file in enumerate(file_pair):
+                        result = method.run([data[i]])
+                        self.save_result(result, file)
+                elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 2:
+                    # 左右の手のデータペアを受け入れる解析
+                    result = method.run(data)
+                    self.save_result(
+                        result,
+                        file_pair[0],
+                    )
+                else:
+                    raise NotImplementedError
+
+    def save_result(self, result: AnalysisResult, analyzed_filename: str):
+        """解析結果を保存する
+
+        Args:
+            result (AnalysisResult): 結果
+            analyzed_filename (str): 解析したファイル名
+        """
+        output_file = os.path.join(self.target_dir.value, "result_tremor.csv")
+        with open(output_file, "w") as file:
+            writer = csv.writer(file)
+            for key, value in result.numerical_result.items():
+                writer.writerows([[key, value]])
+        for key, value in result.image_result:
+            output_image_file_path = remove_extension(analyzed_filename) + key + ".png"
+            for key, image in result.image_result.items():
+                image.save(output_image_file_path)
 
     def on_run_click(self, e: ControlEvent):
         """Buttonのon_clickでは, 引数にControlEventが渡されるが，run()では不要のため, この関数でwrapしている
@@ -84,7 +109,7 @@ class MainApp:
         self.scan()
 
     # scan directory
-    def scan(self):
+    def scan(self) -> list[str]:
         if self.target_dir.value != "Not Selected":
             file_list = []
             self.file_num = 0
@@ -123,6 +148,7 @@ class MainApp:
             self.log_content.value = "No folder is selected"
 
         self.page.update()
+        return file_list
 
     def on_open_result_click(self, _: ft.ControlEvent):
         self.open_result()
