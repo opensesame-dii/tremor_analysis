@@ -74,8 +74,9 @@ class MainApp:
             self.output_file = os.path.join(self.target_dir.value, "result.tremor.csv")
             with open(self.output_file, "w") as file:
                 writer = csv.writer(file)
-                for row in result.numerical_result:
-                    writer.writerows([row])
+                for key, value in result.numerical_result.items():
+                    print("numerical:", result.numerical_result)
+                    writer.writerows([[key, value]])
             self.output_image_file = os.path.join(self.target_dir.value, "image.png")
             for key, image in result.image_result.items():
                 image.save(self.output_image_file)
