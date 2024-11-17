@@ -19,7 +19,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import yaml
-from analysis_methods.base import AnalysisMethodBase
 from flet import ControlEvent
 from scipy.signal import (
     butter,
@@ -32,6 +31,8 @@ from scipy.signal import (
     spectrogram,
 )
 from sklearn.decomposition import PCA
+
+from tremor_analysis.analysis_methods.base import AnalysisMethodBase
 
 
 class MainApp:
