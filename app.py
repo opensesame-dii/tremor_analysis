@@ -37,7 +37,7 @@ from scipy.signal import (
     spectrogram,
 )
 from sklearn.decomposition import PCA
-
+from PIL import Image
 from analysis_methods.base import AnalysisMethodBase
 from analysis_methods.dummy import DummyAnalysis
 
@@ -48,7 +48,7 @@ class MainApp:
     def __init__(self) -> None:
         self.analysis_methods: list[AnalysisMethodBase] = [
             # SpectrogramAnalysis(),
-            DummyAnalysis(), # ここで解析手法のクラスをインスタンス化
+            DummyAnalysis(),  # ここで解析手法のクラスをインスタンス化
             # 他の解析手法もここに追加
         ]
         self.target_dir = ft.Text(value="Not Selected")
@@ -56,16 +56,12 @@ class MainApp:
 
     def run(self):
         # ここでscan()も呼ぶべきかも(20240225ミーティングより)
-        data = ["result", "num"]
-        if self.target_dir:
-            self.output_file = os.path.join(self.target_dir.value, "result.tremor.csv")
-            with open(self.output_file, "w") as file:
-                writer = csv.writer(file)
-                writer.writerows(data)
-            print("file created")
+        data1 = np.zeros((10, 10))  # 仮
+        data2 = np.zeros((20, 20))
+
         for method in self.analysis_methods:
             if method.ACCEPTABLE_DATA_COUNT == 1:
-                method.run(
+                result = method.run(
                     [data1]
                 )  # 全ての解析手法が，runメソッドを持っていることを前提とする
             elif method.ACCEPTABLE_DATA_COUNT == 2:
@@ -74,6 +70,17 @@ class MainApp:
                 method.run([data1, data2])
             else:
                 raise NotImplementedError
+        if self.target_dir:
+            self.output_file = os.path.join(self.target_dir.value, "result.tremor.csv")
+            with open(self.output_file, "w") as file:
+                writer = csv.writer(file)
+                for row in result.numerical_result:
+                    writer.writerows([row])
+            self.output_image_file = os.path.join(self.target_dir.value, "image.png")
+            for key, image in result.image_result.items():
+                image.save(self.output_image_file)
+
+            print("file created")
 
     def on_run_click(self, e: ControlEvent):
         """Buttonのon_clickでは, 引数にControlEventが渡されるが，run()では不要のため, この関数でwrapしている
@@ -83,9 +90,9 @@ class MainApp:
         """
         self.run()
 
-    def setting_field(self):
-        for setting in self.analysis_methods:
-            setting.build_result_ui
+    # def setting_field(self):
+    #     for setting in self.analysis_methods:
+    #         setting.build_result_ui
 
     def read_config_file(self, e: ControlEvent):
         with open("config.yaml") as file:
@@ -266,7 +273,7 @@ class MainApp:
         self.page.window_always_on_top = True  # ウィンドウを最前面に固定
 
         self.build_ui()
-        self.setting_field()
+        # self.setting_field()
         self.page.update()
         page.update()
 

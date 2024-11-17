@@ -1,4 +1,5 @@
-from base import AnalysisMethodBase, AnalysisResult
+from flet_runtime import Control
+from analysis_methods.base import AnalysisMethodBase, AnalysisResult
 from PIL import Image
 from typing import Any, Optional
 
@@ -20,3 +21,6 @@ class DummyAnalysis(AnalysisMethodBase):
             numerical_result={"value1": 1, "value2": 2},
             image_result={"image1": Image.new("RGB", (1, 1))},
         )
+
+    def configure_ui(self) -> Control:
+        print("configure_ui")
