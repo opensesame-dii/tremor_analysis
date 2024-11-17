@@ -1,4 +1,5 @@
 import csv
+import itertools
 import os
 import platform
 import subprocess
@@ -11,7 +12,10 @@ import yaml
 from flet import ControlEvent
 
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase, AnalysisResult
-from tremor_analysis.analysis_methods.dummy import DummyAnalysis
+from tremor_analysis.analysis_methods.dummy import (
+    DummyAnalysis,
+    DummyAnalysisCapableTwoData,
+)
 from tremor_analysis.utils.path import remove_extension
 
 
@@ -20,6 +24,7 @@ class MainApp:
         self.analysis_methods: list[AnalysisMethodBase] = [
             # SpectrogramAnalysis(),
             DummyAnalysis(),  # ここで解析手法のクラスをインスタンス化
+            DummyAnalysisCapableTwoData(),
             # 他の解析手法もここに追加
         ]
         self.target_dir = ft.Text(value="Not Selected")
@@ -181,33 +186,16 @@ class MainApp:
         settings = ft.Container(
             content=ft.Column(
                 [
+                    ft.Text("General Settings"),
                     ft.Row([ft.Text("Row start"), ft.TextField(height=40, width=50)]),
                     ft.Row(
                         [ft.Text("Column start"), ft.TextField(height=40, width=50)]
                     ),
                     ft.Row([ft.Text("Sensors num"), ft.TextField(height=40, width=50)]),
                     ft.Row([ft.Text("Encoding"), ft.TextField(height=40, width=100)]),
-                    ft.Row(
-                        [
-                            ft.Text("Sampling rate"),
-                            ft.TextField(height=40, width=50),
-                            ft.Text("Hz"),
-                        ]
-                    ),
-                    ft.Row(
-                        [
-                            ft.Text("max frequency"),
-                            ft.TextField(height=40, width=50),
-                            ft.Text("Hz"),
-                        ]
-                    ),
-                    ft.Row(
-                        [
-                            ft.Text("min frequency"),
-                            ft.TextField(height=40, width=50),
-                            ft.Text("Hz"),
-                        ]
-                    ),
+                ]
+                + [method.configure_ui() for method in self.analysis_methods]
+                + [
                     apply_button,
                 ]
             ),
