@@ -6,6 +6,8 @@ import flet as ft
 import numpy as np
 from PIL import Image
 
+from tremor_analysis.ui.text_field_with_type import TextFieldWithType
+
 
 @dataclasses.dataclass
 class AnalysisResult:
@@ -90,9 +92,9 @@ class AnalysisMethodBase(ABC):
         self.configure_ui_components = {}
         column = []
         for config_entry in self.config:
-            self.configure_ui_components[config_entry.name] = ft.TextField(
-                value=config_entry.value
-            )  # TODO: TextFieldWithTypeに置き換え
+            self.configure_ui_components[config_entry.name] = TextFieldWithType(
+                dtype=config_entry.type
+            ).widget
             column += [
                 ft.Row(
                     [

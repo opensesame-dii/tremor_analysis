@@ -167,7 +167,9 @@ class MainApp:
                     ),
                     ft.Row([ft.Text("Sensors num"), ft.TextField(height=40, width=50)]),
                     ft.Row([ft.Text("Encoding"), ft.TextField(height=40, width=100)]),
-                ] + [method.configure_ui() for method in self.analysis_methods] + [
+                ]
+                + [method.configure_ui() for method in self.analysis_methods]
+                + [
                     apply_button,
                 ]
             ),
