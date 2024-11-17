@@ -75,11 +75,10 @@ class MainApp:
         with open(output_file, "w") as file:
             writer = csv.writer(file)
             for key, value in result.numerical_result.items():
-                writer.writerows([[key, value]])
-        for key, value in result.image_result:
+                writer.writerows([[key, value]])  # FIXME: 出力の形式がおかしい
+        for key, image in result.image_result.items():
             output_image_file_path = remove_extension(analyzed_filename) + key + ".png"
-            for key, image in result.image_result.items():
-                image.save(output_image_file_path)
+            image.save(output_image_file_path)
 
     def on_run_click(self, e: ControlEvent):
         """Buttonのon_clickでは, 引数にControlEventが渡されるが，run()では不要のため, この関数でwrapしている
