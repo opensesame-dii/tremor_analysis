@@ -20,6 +20,9 @@ from tremor_analysis.utils.path import remove_extension
 
 
 class MainApp:
+    OUTPUT_FILE_EXTENSION = ".tremor.csv"
+    ACCEPTABLE_FILE_EXTENSION = ".csv"
+
     def __init__(self) -> None:
         self.analysis_methods: list[AnalysisMethodBase] = [
             # SpectrogramAnalysis(),
@@ -33,12 +36,16 @@ class MainApp:
         self.pairs_num = 0
 
     def run(self):
+        results_1file: dict[str, list[AnalysisResult]] = {}
+        results_2files: list[AnalysisResult] = []
         file_list = self.scan()
         data1 = np.zeros((10, 10))  # 仮
         data2 = np.zeros((20, 20))
         data = [data1, data2]
 
         for file_pair in file_list:
+            for file in file_pair:
+                results_1file[file] = []
             # TODO: ファイル読み込み
             if len(file_pair) == 1:
                 # TODO: dataとして読み込み data = [data1]
@@ -53,32 +60,39 @@ class MainApp:
                 if method.ACCEPTABLE_DATA_COUNT == 1:
                     for i, file in enumerate(file_pair):
                         result = method.run([data[i]])
-                        self.save_result(result, file)
+                        results_1file[file].append(result)
                 elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 2:
                     # 左右の手のデータペアを受け入れる解析
                     result = method.run(data)
-                    self.save_result(
-                        result,
-                        file_pair[0],
-                    )
+                    results_2files.append(result)
                 else:
                     raise NotImplementedError
+            self.append_result_file(
+                results_1file=results_1file,
+                results_2files=results_2files,
+            )
 
-    def save_result(self, result: AnalysisResult, analyzed_filename: str):
-        """解析結果を保存する
+    def append_result_file(
+            self,
+            results_1file: dict[str, list[AnalysisResult]],
+            results_2files: list[AnalysisResult],
+    ) -> None:
+        filenames = list(results_1file.keys())  # ファイル名を入手
+        # TODO: 単一ファイルの結果出力
+        # TODO: 出力先ファイルの存在確認
+        if ("result_1file" + self.OUTPUT_FILE_EXTENSION):
+            pass
+        # TODO: なかったら一通りの結果の列名をmethod_result.numerical_resultから取得してヘッダー作成
+        for filename in filenames:
+            for method_result in results_1file[filename]:
+                method_result.numerical_result
 
-        Args:
-            result (AnalysisResult): 結果
-            analyzed_filename (str): 解析したファイル名
-        """
-        output_file = os.path.join(self.target_dir.value, "result_tremor.csv")
-        with open(output_file, "w") as file:
-            writer = csv.writer(file)
-            for key, value in result.numerical_result.items():
-                writer.writerows([[key, value]])  # FIXME: 出力の形式がおかしい
-        for key, image in result.image_result.items():
-            output_image_file_path = remove_extension(analyzed_filename) + key + ".png"
-            image.save(output_image_file_path)
+        # TODO: ペアファイルの結果出漁
+        if len(results_2files) != 0:
+            # TODO: 出力先ファイルの存在確認
+            # TODO: なかったら一通りの結果の列名をmethod_result.numerical_resultから取得してヘッダー作成
+            # ファイル名は，filenamesを参照して取得
+            pass
 
     def on_run_click(self, e: ControlEvent):
         """Buttonのon_clickでは, 引数にControlEventが渡されるが，run()では不要のため, この関数でwrapしている
@@ -113,7 +127,7 @@ class MainApp:
         self.scan()
 
     # scan directory
-    def scan(self) -> list[str]:
+    def scan(self) -> list[list[str]]:
         if self.target_dir.value != "Not Selected":
             file_list = []
             self.file_num = 0
@@ -126,7 +140,7 @@ class MainApp:
                 csv_files = [
                     f
                     for f in os.listdir(directory)
-                    if f.endswith(".csv") and not f.endswith(".tremor.csv")
+                    if f.endswith(self.ACCEPTABLE_FILE_EXTENSION) and not f.endswith(self.OUTPUT_FILE_EXTENSION)
                 ]
                 self.file_num += len(csv_files)
                 if len(csv_files) == 2:
