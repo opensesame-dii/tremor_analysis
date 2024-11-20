@@ -1,30 +1,14 @@
 import dataclasses
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Type, Union
+from typing import Any, Optional
 
 import flet as ft
 import numpy as np
 from PIL import Image
 
+from tremor_analysis.data_models.analysis_result import AnalysisResult
+from tremor_analysis.data_models.config_parameter import ConfigParameter
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
-
-
-@dataclasses.dataclass
-class AnalysisResult:
-    """
-    解析結果のデータを格納するクラス
-    解析結果の数値データと画像データを，それぞれの項目名をキーとするdictに格納する
-    """
-
-    numerical_result: dict[str, Union[int, float]]
-    image_result: dict[str, Image.Image]
-
-
-@dataclasses.dataclass
-class ConfigParameter:
-    name: str
-    value: Any
-    type: Union[Type[int], Type[float]]
 
 
 class AnalysisMethodBase(ABC):

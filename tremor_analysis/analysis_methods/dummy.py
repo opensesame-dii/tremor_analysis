@@ -2,11 +2,9 @@ from typing import Any, Optional
 
 from PIL import Image
 
-from tremor_analysis.analysis_methods.base import (
-    AnalysisMethodBase,
-    AnalysisResult,
-    ConfigParameter,
-)
+from tremor_analysis.analysis_methods.base import AnalysisMethodBase
+from tremor_analysis.data_models.analysis_result import AnalysisResult
+from tremor_analysis.data_models.config_parameter import ConfigParameter
 
 
 class DummyAnalysis(AnalysisMethodBase):
