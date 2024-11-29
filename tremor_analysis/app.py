@@ -73,24 +73,67 @@ class MainApp:
             )
 
     def append_result_file(
-            self,
-            results_1file: dict[str, list[AnalysisResult]],
-            results_2files: list[AnalysisResult],
+        self,
+        results_1file: dict[str, list[AnalysisResult]],  # ファイル名：結果
+        results_2files: list[AnalysisResult],
     ) -> None:
-        filenames = list(results_1file.keys())  # ファイル名を入手
-        # TODO: 単一ファイルの結果出力
-        # TODO: 出力先ファイルの存在確認
-        if ("result_1file" + self.OUTPUT_FILE_EXTENSION):
-            pass
-        # TODO: なかったら一通りの結果の列名をmethod_result.numerical_resultから取得してヘッダー作成
-        for filename in filenames:
-            for method_result in results_1file[filename]:
-                method_result.numerical_result
 
-        # TODO: ペアファイルの結果出漁
+        filenames = list(results_1file.keys())  # ファイル名を入手
+
+        #  単一ファイルの結果出力
+        output_1file = os.path.join(
+            self.target_dir.value, "result_1file" + self.OUTPUT_FILE_EXTENSION
+        )
+        #  一通りの結果の列名をmethod_result.numerical_resultから取得してヘッダー作成
+
+        header = []
+        for method_result in results_1file[filenames[0]]:
+            header += [
+                f"{method_result.analysis_method_class.__class__.__name__}_{key}"
+                for key in method_result.numerical_result.keys()
+            ]
+        #  出力先ファイルの存在確認,なかったらheader書き込み
+        if not os.path.isfile(output_1file):
+            with open(output_1file, "w", newline="") as file:
+                writer = csv.writer(file)
+                writer.writerow(["filename"] + header)
+        with open(output_1file, "a", newline="") as file:
+            writer = csv.writer(file)
+            # TODO:
+            # method_result.numerical_resultのキーに対して総当たりで， f"{method_result.analysis_method_class.__class__.__name__}_{key}" がheaderの要素と一致するものを検索
+            # それの値を書き込み
+            for filename in filenames:
+                # headerの要素に対するループ
+                for method_result in results_1file[filename]:
+                    #  クラス名_key: valueの新しいresultリストを作成
+                    result_with_class = {
+                        f"{method_result.analysis_method_class.__class__.__name__}_{key}": value
+                        for key, value in method_result.numerical_result.items()
+                    }
+                    result_row = [
+                        result_with_class[header_key] for header_key in header
+                    ]
+                writer.writerow([filename] + result_row)
+
+        # TODO: ペアファイルの結果出力
+        output_2file = os.path.join(
+            self.target_dir.value, "result_2file2" + self.OUTPUT_FILE_EXTENSION
+        )
+
         if len(results_2files) != 0:
+            # 一通りの結果の列名をmethod_result.numerical_resultから取得してヘッダー作成
+            header = []
+            for method_result in results_2files:
+                header += [
+                    f"{method_result.analysis_method_class.__class__.__name__}_{key}"
+                    for key in method_result.numerical_result.keys()
+                ]
             # TODO: 出力先ファイルの存在確認
-            # TODO: なかったら一通りの結果の列名をmethod_result.numerical_resultから取得してヘッダー作成
+            if not os.path.isfile(output_2file):
+                with open(output_2file, "w", newline="") as file:
+                    writer = csv.writer(file)
+                    writer.writerow(["filename"] + header)
+
             # ファイル名は，filenamesを参照して取得
             pass
 
@@ -140,7 +183,8 @@ class MainApp:
                 csv_files = [
                     f
                     for f in os.listdir(directory)
-                    if f.endswith(self.ACCEPTABLE_FILE_EXTENSION) and not f.endswith(self.OUTPUT_FILE_EXTENSION)
+                    if f.endswith(self.ACCEPTABLE_FILE_EXTENSION)
+                    and not f.endswith(self.OUTPUT_FILE_EXTENSION)
                 ]
                 self.file_num += len(csv_files)
                 if len(csv_files) == 2:

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses
 from abc import ABC, abstractmethod
 from typing import Any, Optional, Type, Union
@@ -16,6 +18,7 @@ class AnalysisResult:
 
     numerical_result: dict[str, Union[int, float]]
     image_result: dict[str, Image.Image]
+    analysis_method_class: Type[AnalysisMethodBase]
 
 
 @dataclasses.dataclass
@@ -76,6 +79,7 @@ class AnalysisMethodBase(ABC):
         return AnalysisResult(
             numerical_result={"value1": 1, "value2": 2},
             image_result={"image1": Image.new("RGB", (1, 1))},
+            analysis_method_class=type(self),
         )
 
     def configure_ui(self) -> ft.Control:
