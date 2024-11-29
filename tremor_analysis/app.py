@@ -65,6 +65,8 @@ class MainApp:
                     # 左右の手のデータペアを受け入れる解析
                     result = method.run(data)
                     results_2files.append(result)
+                elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 1:
+                    pass
                 else:
                     raise NotImplementedError
             self.append_result_file(
