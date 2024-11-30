@@ -14,9 +14,20 @@ from tremor_analysis.analysis_methods.dummy import (
     DummyAnalysis,
     DummyAnalysisCapableTwoData,
 )
+from tremor_analysis.data_models.config_parameter import ConfigParameter
+from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
+from tremor_analysis.ui.text_field_with_type import TextFieldWithType
 
 
 class MainApp:
+    # TODO: pathlib使って書き直す
+    CONFIG_FILE_PATH = ".tremor_analysis_config.yaml"
+    CONFIG_DEFAULT_VALUE: list[ConfigParameter] = [
+        ConfigParameter(name="Row start", value=1, type=int),
+        ConfigParameter(name="Column start", value=1, type=int),
+        ConfigParameter(name="Encoding", value="utf-8", type=str),
+    ]
+
     def __init__(self) -> None:
         self.analysis_methods: list[AnalysisMethodBase] = [
             # SpectrogramAnalysis(),
@@ -24,6 +35,18 @@ class MainApp:
             DummyAnalysisCapableTwoData(),
             # 他の解析手法もここに追加
         ]
+        self.yaml_file_handler = YamlFileHandler(
+            self.CONFIG_FILE_PATH,
+            {
+                "_general_": {default.name: default.value}
+                for default in self.CONFIG_DEFAULT_VALUE
+            }
+            | {
+                method.__class__.__name__: {entry.name: entry.value}
+                for method in self.analysis_methods
+                for entry in method.config
+            },
+        )
         self.target_dir = ft.Text(value="Not Selected")
         self.log_content = ft.Text()
 
@@ -44,12 +67,16 @@ class MainApp:
             else:
                 raise NotImplementedError
         if self.target_dir:
-            self.output_file = os.path.join(self.target_dir.value, "result.tremor.csv")
+            self.output_file = os.path.join(
+                self.target_dir.value, "result.tremor.csv"
+            )
             with open(self.output_file, "w") as file:
                 writer = csv.writer(file)
                 for key, value in result.numerical_result.items():
                     writer.writerows([[key, value]])
-            self.output_image_file = os.path.join(self.target_dir.value, "image.png")
+            self.output_image_file = os.path.join(
+                self.target_dir.value, "image.png"
+            )
             for key, image in result.image_result.items():
                 image.save(self.output_image_file)
 
@@ -106,7 +133,9 @@ class MainApp:
                 self.file_num += len(csv_files)
                 if len(csv_files) == 2:
                     file_list.append(
-                        tuple(os.path.join(directory, file) for file in csv_files)
+                        tuple(
+                            os.path.join(directory, file) for file in csv_files
+                        )
                     )
                     self.pairs_num += 1
 
@@ -141,28 +170,44 @@ class MainApp:
             subprocess.Popen(["xdg-open", self.target_dir.value])
         return
 
-    def on_apply_click(self, _: ft.ControlEvent):
+    def on_apply_click(self, _: ft.ControlEvent) -> None:
         self.apply()
 
     # apply settings
-    def apply(self):
+    def apply(self) -> None:
+        yaml_file_content_tmp: dict[str, Any] = {}
+        # TODO: 全体の設定が変わった時の処理を追加
+        yaml_file_content_tmp["_general_"] = {
+            general_config.name: general_config.value  # TODO: ここでgeneral_config.valueを更新したい
+            for general_config in self.CONFIG_DEFAULT_VALUE
+        }
         for method in self.analysis_methods:
+            yaml_file_content_tmp[method.__class__.__name__] = {}
             for config, ui_component in zip(
                 method.config, method.configure_ui_components.values()
             ):
-                if ui_component.value != "" and ui_component.value != config.value:
-                    config.value = ui_component.value
+                config.value = ui_component.value
+                yaml_file_content_tmp[method.__class__.__name__][
+                    config.name
+                ] = ui_component.value
+        if yaml_file_content_tmp != self.yaml_file_handler.content:
+            self.yaml_file_handler.content = yaml_file_content_tmp
+            self.yaml_file_handler.export_yaml()
 
     def build_ui(self):
         self.folder_picker = ft.FilePicker(on_result=self.on_folder_picked)
         self.page.overlay.append(self.folder_picker)
         select_folder_button = ft.Row(
             [
-                ft.OutlinedButton(text="Select Folder", on_click=self.show_pick_folder),
+                ft.OutlinedButton(
+                    text="Select Folder", on_click=self.show_pick_folder
+                ),
                 self.target_dir,
             ]
         )
-        scan_button = ft.OutlinedButton(text="Scan", on_click=self.on_scan_click)
+        scan_button = ft.OutlinedButton(
+            text="Scan", on_click=self.on_scan_click
+        )
         run_button = ft.OutlinedButton(text="Run", on_click=self.on_run_click)
         open_result_button = ft.OutlinedButton(
             text="Open Result", on_click=self.on_open_result_click
@@ -170,19 +215,23 @@ class MainApp:
         apply_button = ft.OutlinedButton(
             text="Apply&Save Settings",
             on_click=self.on_apply_click,
-            # text="Apply&Save Settings",
-            # on_click="",
         )
         settings = ft.Container(
             content=ft.Column(
                 [
                     ft.Text("General Settings"),
-                    ft.Row([ft.Text("Row start"), ft.TextField(height=40, width=50)]),
+                ]
+                + [
                     ft.Row(
-                        [ft.Text("Column start"), ft.TextField(height=40, width=50)]
-                    ),
-                    ft.Row([ft.Text("Sensors num"), ft.TextField(height=40, width=50)]),
-                    ft.Row([ft.Text("Encoding"), ft.TextField(height=40, width=100)]),
+                        [
+                            ft.Text(general_config.name),
+                            TextFieldWithType(
+                                dtype=general_config.type,
+                                default_value=general_config.value,
+                            ).widget,
+                        ]
+                    )
+                    for general_config in self.CONFIG_DEFAULT_VALUE
                 ]
                 + [method.configure_ui() for method in self.analysis_methods]
                 + [
@@ -217,7 +266,12 @@ class MainApp:
                     ft.Container(
                         content=(
                             ft.Column(
-                                [settings, scan_button, run_button, open_result_button]
+                                [
+                                    settings,
+                                    scan_button,
+                                    run_button,
+                                    open_result_button,
+                                ]
                             )
                         ),
                         margin=10,

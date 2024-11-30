@@ -1,4 +1,4 @@
-from typing import Type, Union
+from typing import Optional, Type, Union
 
 import flet as ft
 
@@ -6,18 +6,30 @@ from tremor_analysis.ui.input_filters import InputFilters
 
 
 class TextFieldWithType:
-    def __init__(self, dtype: Union[Type[int], Type[float]]):
+    def __init__(
+        self,
+        dtype: Union[Type[int], Type[float], Type[str]],
+        default_value: Optional[str] = "",
+    ):
         self.dtype = dtype
         if self.dtype == int:
             self.widget = ft.TextField(
-                input_filter=InputFilters.int
+                input_filter=InputFilters.int,
+                value=default_value,
             )
         elif self.dtype == float:
             self.widget = ft.TextField(
-                input_filter=InputFilters.float
+                input_filter=InputFilters.float,
+                value=default_value,
+            )
+        elif self.dtype == str:
+            self.widget = ft.TextField(
+                value=default_value,
             )
         else:
-            raise NotImplementedError("CustomTextField.dtype must be int or float")
+            raise NotImplementedError(
+                "CustomTextField.dtype must be int, float or str"
+            )
 
     @property
     def value(self):
@@ -31,6 +43,8 @@ class TextFieldWithType:
                 return 0
             elif self.dtype == float:
                 return 0.0
+            elif self.dtype == str:
+                return ""
 
 
 if __name__ == "__main__":

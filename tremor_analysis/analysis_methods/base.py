@@ -1,6 +1,5 @@
-import dataclasses
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Optional
 
 import flet as ft
 import numpy as np
@@ -76,9 +75,12 @@ class AnalysisMethodBase(ABC):
         self.configure_ui_components = {}
         column = []
         for config_entry in self.config:
-            self.configure_ui_components[config_entry.name] = TextFieldWithType(
-                dtype=config_entry.type
-            ).widget
+            self.configure_ui_components[config_entry.name] = (
+                TextFieldWithType(
+                    dtype=config_entry.type,
+                    default_value=config_entry.value,
+                ).widget
+            )
             column += [
                 ft.Row(
                     [
