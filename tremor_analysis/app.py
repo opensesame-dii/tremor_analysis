@@ -116,8 +116,8 @@ class MainApp:
                 writer.writerow([filename] + result_row)
 
         # TODO: ペアファイルの結果出力
-        output_2file = os.path.join(
-            self.target_dir.value, "result_2file2" + self.OUTPUT_FILE_EXTENSION
+        output_2files = os.path.join(
+            self.target_dir.value, "result_2file" + self.OUTPUT_FILE_EXTENSION
         )
 
         if len(results_2files) != 0:
@@ -128,12 +128,24 @@ class MainApp:
                     f"{method_result.analysis_method_class.__class__.__name__}_{key}"
                     for key in method_result.numerical_result.keys()
                 ]
-            # TODO: 出力先ファイルの存在確認
-            if not os.path.isfile(output_2file):
-                with open(output_2file, "w", newline="") as file:
+            # 出力先ファイルの存在確認,なかったらheader書き込み
+            if not os.path.isfile(output_2files):
+                with open(output_2files, "w", newline="") as file:
                     writer = csv.writer(file)
                     writer.writerow(["filename"] + header)
-
+            with open(output_2files, "a", newline="") as file:
+                writer = csv.writer(file)
+                for filename in filenames:
+                    for method_result in results_2files:
+                        #  クラス名_key: valueの新しいresultリストを作成
+                        result_with_class = {
+                            f"{method_result.analysis_method_class.__class__.__name__}_{key}": value
+                            for key, value in method_result.numerical_result.items()
+                        }
+                        result_row = [
+                            result_with_class[header_key] for header_key in header
+                        ]
+                    writer.writerow([filename] + result_row)
             # ファイル名は，filenamesを参照して取得
             pass
 
