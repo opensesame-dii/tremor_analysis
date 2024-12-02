@@ -125,11 +125,10 @@ class MainApp:
         if len(results_2files) != 0:
             # 一通りの結果の列名をmethod_result.numerical_resultから取得してヘッダー作成
             header = []
-            for method_result in results_2files:
-                header += [
-                    f"{method_result.analysis_method_class.__qualname__}_{key}"
-                    for key in method_result.numerical_result.keys()
-                ]
+            header += [
+                f"{results_2files[0].analysis_method_class.__qualname__}_{key}"
+                for key in method_result.numerical_result.keys()
+            ]
             # 出力先ファイルの存在確認,なかったらheader書き込み
             if not os.path.isfile(output_2files):
                 with open(output_2files, "w", newline="") as file:
