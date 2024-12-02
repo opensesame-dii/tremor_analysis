@@ -69,10 +69,10 @@ class MainApp:
                     pass
                 else:
                     raise NotImplementedError
-            self.append_result_file(
-                results_1file=results_1file,
-                results_2files=results_2files,
-            )
+        self.append_result_file(
+            results_1file=results_1file,
+            results_2files=results_2files,
+        )
 
     def append_result_file(
         self,
@@ -141,7 +141,7 @@ class MainApp:
                     for method_result in results_2files:
                         #  クラス名_key: valueの新しいresultリストを作成
                         result_with_class = {
-                            f"{method_result.analysis_method_class.__class__.__name__}_{key}": value
+                            f"{method_result.analysis_method_class.__qualname__}_{key}": value
                             for key, value in method_result.numerical_result.items()
                         }
                         result_row = [
