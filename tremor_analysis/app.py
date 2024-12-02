@@ -65,6 +65,8 @@ class MainApp:
                     # 左右の手のデータペアを受け入れる解析
                     result = method.run(data)
                     results_2files.append(result)
+                elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 1:
+                    pass
                 else:
                     raise NotImplementedError
             self.append_result_file(
@@ -89,7 +91,7 @@ class MainApp:
         header = []
         for method_result in results_1file[filenames[0]]:
             header += [
-                f"{method_result.analysis_method_class.__class__.__name__}_{key}"
+                f"{method_result.analysis_method_class.__qualname__}_{key}"
                 for key in method_result.numerical_result.keys()
             ]
         #  出力先ファイルの存在確認,なかったらheader書き込み
@@ -100,14 +102,14 @@ class MainApp:
         with open(output_1file, "a", newline="") as file:
             writer = csv.writer(file)
             # TODO:
-            # method_result.numerical_resultのキーに対して総当たりで， f"{method_result.analysis_method_class.__class__.__name__}_{key}" がheaderの要素と一致するものを検索
+            # method_result.numerical_resultのキーに対して総当たりで， f"{method_result.analysis_method_class.__qualname__}_{key}" がheaderの要素と一致するものを検索
             # それの値を書き込み
             for filename in filenames:
                 # headerの要素に対するループ
                 for method_result in results_1file[filename]:
                     #  クラス名_key: valueの新しいresultリストを作成
                     result_with_class = {
-                        f"{method_result.analysis_method_class.__class__.__name__}_{key}": value
+                        f"{method_result.analysis_method_class.__qualname__}_{key}": value
                         for key, value in method_result.numerical_result.items()
                     }
                     result_row = [
@@ -125,7 +127,7 @@ class MainApp:
             header = []
             for method_result in results_2files:
                 header += [
-                    f"{method_result.analysis_method_class.__class__.__name__}_{key}"
+                    f"{method_result.analysis_method_class.__qualname__}_{key}"
                     for key in method_result.numerical_result.keys()
                 ]
             # 出力先ファイルの存在確認,なかったらheader書き込み
