@@ -19,7 +19,7 @@ class AnalysisResult:
     numerical_result: dict[str, Union[int, float]]
     image_result: dict[str, Image.Image]
     analysis_method_class: Type[AnalysisMethodBase]
-    filename1: str
+    filename1: Optional[str]
     filename2: Optional[str]
 
 
@@ -82,8 +82,8 @@ class AnalysisMethodBase(ABC):
             numerical_result={"value1": 1, "value2": 2},
             image_result={"image1": Image.new("RGB", (1, 1))},
             analysis_method_class=type(self),
-            filename1="file1",
-            filenam2="file2",
+            filename1=None,
+            filenam2=None,
         )
 
     def configure_ui(self) -> ft.Control:
