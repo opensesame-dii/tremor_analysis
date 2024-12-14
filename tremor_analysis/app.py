@@ -81,13 +81,6 @@ class MainApp:
         results_2files: list[AnalysisResult],
     ) -> None:
 
-        filenames = list(
-            result.filename1 for result in results_1file
-        )  # ファイル名を入手
-        pair_filenames = list(
-            results.filename1 + results.filename2 for results in results_2files
-        )
-
         #  単一ファイルの結果出力
         output_1file = os.path.join(
             self.target_dir.value, "result_1file" + self.OUTPUT_FILE_EXTENSION
@@ -109,7 +102,7 @@ class MainApp:
             # TODO:
             # method_result.numerical_resultのキーに対して総当たりで， f"{method_result.analysis_method_class.__qualname__}_{key}" がheaderの要素と一致するものを検索
             # それの値を書き込み
-            for filename in filenames:
+            for filename in list(result.filename1 for result in results_1file):
                 # headerの要素に対するループ
                 for method_result in results_1file:
                     #  クラス名_key: valueの新しいresultリストを作成
@@ -141,7 +134,9 @@ class MainApp:
                     writer.writerow(["filename"] + header)
             with open(output_2files, "a", newline="") as file:
                 writer = csv.writer(file)
-                for filename in pair_filenames:
+                for filename in list(
+                    results.filename1 + results.filename2 for results in results_2files
+                ):
                     for method_result in results_2files:
                         #  クラス名_key: valueの新しいresultリストを作成
                         result_with_class = {
@@ -300,7 +295,9 @@ class MainApp:
                 [
                     ft.Container(
                         content=(
-                            ft.Column([scan_button, run_button, open_result_button])
+                            ft.Column(
+                                [settings, scan_button, run_button, open_result_button]
+                            )
                         ),
                         margin=10,
                         width=300,
