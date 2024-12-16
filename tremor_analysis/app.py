@@ -99,7 +99,6 @@ class MainApp:
                 writer.writerow(["filename"] + header)
         with open(output_1file, "a", newline="") as file:
             writer = csv.writer(file)
-            # TODO:
             # method_result.numerical_resultのキーに対して総当たりで， f"{method_result.analysis_method_class.__qualname__}_{key}" がheaderの要素と一致するものを検索
             # それの値を書き込み
             for filename in list(result.filename1 for result in results_1file):
@@ -115,7 +114,6 @@ class MainApp:
                     ]
                 writer.writerow([filename] + result_row)
 
-        # TODO: ペアファイルの結果出力
         output_2files = os.path.join(
             self.target_dir.value, "result_2file" + self.OUTPUT_FILE_EXTENSION
         )
