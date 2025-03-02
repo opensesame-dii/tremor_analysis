@@ -123,28 +123,26 @@ class MainApp:
             header = []
             header += [
                 f"{results_2files[0].analysis_method_class.__qualname__}_{key}"
-                for key in method_result.numerical_result.keys()
+                for key in results_2files[0].numerical_result.keys()
             ]
             # 出力先ファイルの存在確認,なかったらheader書き込み
             if not os.path.isfile(output_2files):
                 with open(output_2files, "w", newline="") as file:
                     writer = csv.writer(file)
-                    writer.writerow(["filename"] + header)
+                    writer.writerow(["filename1", "filename2"] + header)
             with open(output_2files, "a", newline="") as file:
                 writer = csv.writer(file)
-                for filename in list(
-                    results.filename1 + results.filename2 for results in results_2files
-                ):
-                    for method_result in results_2files:
-                        #  クラス名_key: valueの新しいresultリストを作成
-                        result_with_class = {
-                            f"{method_result.analysis_method_class.__qualname__}_{key}": value
-                            for key, value in method_result.numerical_result.items()
-                        }
-                        result_row = [
-                            result_with_class[header_key] for header_key in header
-                        ]
-                    writer.writerow([filename] + result_row)
+
+                for results in results_2files:
+                    #  クラス名_key: valueの新しいresultリストを作成
+                    result_with_class = {
+                        f"{results.analysis_method_class.__qualname__}_{key}": value
+                        for key, value in results.numerical_result.items()
+                    }
+                    result_row = [
+                        result_with_class[header_key] for header_key in header
+                    ]
+                    writer.writerow([results.filename1, results.filename2] + result_row)
             pass
 
     def on_run_click(self, e: ControlEvent):
@@ -313,7 +311,7 @@ class MainApp:
         # page setting
         self.page.title = "tremor_analysis"
         self.page.window_width = 700  # 幅
-        self.page.window_height = ""  # 高さ
+        self.page.window_height = 1100  # 高さ
         self.page.window_top = ""  # 位置(TOP)
         self.page.window_left = ""  # 位置(LEFT)
         self.page.window_always_on_top = True  # ウィンドウを最前面に固定
