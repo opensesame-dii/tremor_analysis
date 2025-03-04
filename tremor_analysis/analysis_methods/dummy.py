@@ -29,6 +29,8 @@ class DummyAnalysis(AnalysisMethodBase):
             analysis_method_class=DummyAnalysis,
             numerical_result={"value1": 1, "value2": 2},
             image_result={"image1": Image.new("RGB", (1, 1))},
+            filename1=None,  # ファイル名を取得する
+            filename2=None,
         )
 
 
@@ -52,4 +54,6 @@ class DummyAnalysisCapableTwoData(AnalysisMethodBase):
             numerical_result={"value1": 1, "value2": 2},
             image_result={"image1": Image.new("RGB", (1, 1))},
             analysis_method_class=type(self),
+            filename1=None,
+            filename2=None,
         )

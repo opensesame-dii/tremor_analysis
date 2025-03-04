@@ -36,7 +36,7 @@ class MainApp:
         self.pairs_num = 0
 
     def run(self):
-        results_1file: dict[str, list[AnalysisResult]] = {}
+        results_1file: list[AnalysisResult] = []
         results_2files: list[AnalysisResult] = []
         file_list = self.scan()
         data1 = np.zeros((10, 10))  # 仮
@@ -44,8 +44,6 @@ class MainApp:
         data = [data1, data2]
 
         for file_pair in file_list:
-            for file in file_pair:
-                results_1file[file] = []
             # TODO: ファイル読み込み
             if len(file_pair) == 1:
                 # TODO: dataとして読み込み data = [data1]
@@ -59,11 +57,14 @@ class MainApp:
             for method in self.analysis_methods:
                 if method.ACCEPTABLE_DATA_COUNT == 1:
                     for i, file in enumerate(file_pair):
-                        result = method.run([data[i]])
-                        results_1file[file].append(result)
+                        result = method.run(data)
+                        result.filename1 = file_pair[0]
+                        results_1file.append(result)
                 elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 2:
                     # 左右の手のデータペアを受け入れる解析
                     result = method.run(data)
+                    result.filename1 = file_pair[0]
+                    result.filename2 = file_pair[1]
                     results_2files.append(result)
                 elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 1:
                     pass
@@ -76,11 +77,9 @@ class MainApp:
 
     def append_result_file(
         self,
-        results_1file: dict[str, list[AnalysisResult]],  # ファイル名：結果
+        results_1file: list[AnalysisResult],  # ファイル名：結果
         results_2files: list[AnalysisResult],
     ) -> None:
-
-        filenames = list(results_1file.keys())  # ファイル名を入手
 
         #  単一ファイルの結果出力
         output_1file = os.path.join(
@@ -89,11 +88,10 @@ class MainApp:
         #  一通りの結果の列名をmethod_result.numerical_resultから取得してヘッダー作成
 
         header = []
-        for method_result in results_1file[filenames[0]]:
-            header += [
-                f"{method_result.analysis_method_class.__qualname__}_{key}"
-                for key in method_result.numerical_result.keys()
-            ]
+        header += [
+            f"{results_1file[0].analysis_method_class.__qualname__}_{key}"
+            for key in results_1file[0].numerical_result.keys()
+        ]
         #  出力先ファイルの存在確認,なかったらheader書き込み
         if not os.path.isfile(output_1file):
             with open(output_1file, "w", newline="") as file:
@@ -101,12 +99,11 @@ class MainApp:
                 writer.writerow(["filename"] + header)
         with open(output_1file, "a", newline="") as file:
             writer = csv.writer(file)
-            # TODO:
             # method_result.numerical_resultのキーに対して総当たりで， f"{method_result.analysis_method_class.__qualname__}_{key}" がheaderの要素と一致するものを検索
             # それの値を書き込み
-            for filename in filenames:
+            for filename in list(result.filename1 for result in results_1file):
                 # headerの要素に対するループ
-                for method_result in results_1file[filename]:
+                for method_result in results_1file:
                     #  クラス名_key: valueの新しいresultリストを作成
                     result_with_class = {
                         f"{method_result.analysis_method_class.__qualname__}_{key}": value
@@ -117,7 +114,6 @@ class MainApp:
                     ]
                 writer.writerow([filename] + result_row)
 
-        # TODO: ペアファイルの結果出力
         output_2files = os.path.join(
             self.target_dir.value, "result_2file" + self.OUTPUT_FILE_EXTENSION
         )
@@ -127,27 +123,26 @@ class MainApp:
             header = []
             header += [
                 f"{results_2files[0].analysis_method_class.__qualname__}_{key}"
-                for key in method_result.numerical_result.keys()
+                for key in results_2files[0].numerical_result.keys()
             ]
             # 出力先ファイルの存在確認,なかったらheader書き込み
             if not os.path.isfile(output_2files):
                 with open(output_2files, "w", newline="") as file:
                     writer = csv.writer(file)
-                    writer.writerow(["filename"] + header)
+                    writer.writerow(["filename1", "filename2"] + header)
             with open(output_2files, "a", newline="") as file:
                 writer = csv.writer(file)
-                for filename in filenames:
-                    for method_result in results_2files:
-                        #  クラス名_key: valueの新しいresultリストを作成
-                        result_with_class = {
-                            f"{method_result.analysis_method_class.__qualname__}_{key}": value
-                            for key, value in method_result.numerical_result.items()
-                        }
-                        result_row = [
-                            result_with_class[header_key] for header_key in header
-                        ]
-                    writer.writerow([filename] + result_row)
-            # ファイル名は，filenamesを参照して取得
+
+                for results in results_2files:
+                    #  クラス名_key: valueの新しいresultリストを作成
+                    result_with_class = {
+                        f"{results.analysis_method_class.__qualname__}_{key}": value
+                        for key, value in results.numerical_result.items()
+                    }
+                    result_row = [
+                        result_with_class[header_key] for header_key in header
+                    ]
+                    writer.writerow([results.filename1, results.filename2] + result_row)
             pass
 
     def on_run_click(self, e: ControlEvent):
@@ -316,7 +311,7 @@ class MainApp:
         # page setting
         self.page.title = "tremor_analysis"
         self.page.window_width = 700  # 幅
-        self.page.window_height = ""  # 高さ
+        self.page.window_height = 1100  # 高さ
         self.page.window_top = ""  # 位置(TOP)
         self.page.window_left = ""  # 位置(LEFT)
         self.page.window_always_on_top = True  # ウィンドウを最前面に固定
