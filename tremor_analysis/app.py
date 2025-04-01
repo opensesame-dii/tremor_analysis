@@ -16,6 +16,21 @@ from tremor_analysis.analysis_methods.dummy import (
     DummyAnalysis,
     DummyAnalysisCapableTwoData,
 )
+
+"""
+from tremor_analysis.analysis_methods.coherence import (
+    CoherenceAnalysis,
+    CoherenceAnalysisCapableTwoData,
+)
+from tremor_analysis.analysis_methods.PowerDensity import (
+    PowerDensityAnalysis,
+    PowerDensityAnalysisCapableTwoData,
+)
+from tremor_analysis.analysis_methods.Spectrogram import (
+    SpectrogramAnalysis,
+    SpectrogramAnalysisCapableTwoData,
+)
+"""
 from tremor_analysis.utils.path import remove_extension
 
 
@@ -29,6 +44,14 @@ class MainApp:
             DummyAnalysis(),  # ここで解析手法のクラスをインスタンス化
             DummyAnalysisCapableTwoData(),
             # 他の解析手法もここに追加
+            """
+            CoherenceAnalysis(),
+            CoherenceAnalysisCapableTwoData(),
+            Power_densityAnalysis(),
+            Power_densityAnalysisCapableTwoData(),
+            SpectrogramAnalysis(),
+            SpectrogramAnalysisCapableTwoData(),
+            """,
         ]
         self.target_dir = ft.Text(value="Not Selected")
         self.log_content = ft.Text()
@@ -42,7 +65,6 @@ class MainApp:
         data1 = np.zeros((10, 10))  # 仮
         data2 = np.zeros((20, 20))
         data = [data1, data2]
-        print(file_list)
 
         for file_pair in file_list:
             # TODO: ファイル読み込み
@@ -296,7 +318,9 @@ class MainApp:
                 [
                     ft.Container(
                         content=(
-                            ft.Column([scan_button, run_button, open_result_button])
+                            ft.Column(
+                                [settings, scan_button, run_button, open_result_button]
+                            )
                         ),
                         margin=10,
                         width=300,
