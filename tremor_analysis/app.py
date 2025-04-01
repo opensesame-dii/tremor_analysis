@@ -42,14 +42,19 @@ class MainApp:
         data1 = np.zeros((10, 10))  # 仮
         data2 = np.zeros((20, 20))
         data = [data1, data2]
+        print(file_list)
 
         for file_pair in file_list:
             # TODO: ファイル読み込み
             if len(file_pair) == 1:
                 # TODO: dataとして読み込み data = [data1]
+                with open(file_pair[0]) as read_data:
+                    data = read_data
                 pass
             elif len(file_pair) == 2:
                 # TODO: dataとして読み込み data = [data1, data2]
+                with open(file_pair[0], "r") as data1, open(file_pair[1], "r") as data2:
+                    data = [data1, data2]
                 pass
             else:
                 raise NotImplementedError
@@ -291,9 +296,7 @@ class MainApp:
                 [
                     ft.Container(
                         content=(
-                            ft.Column(
-                                [settings, scan_button, run_button, open_result_button]
-                            )
+                            ft.Column([scan_button, run_button, open_result_button])
                         ),
                         margin=10,
                         width=300,
