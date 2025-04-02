@@ -262,27 +262,31 @@ class MainApp:
                 + [method.configure_ui() for method in self.analysis_methods]
                 + [
                     apply_button,
-                ]
+                ],
+                scroll=ft.ScrollMode.ALWAYS,
             ),
             padding=25,
+            height=500,
         )
         log_outputs = ft.Container(
             content=(
                 ft.Column(
                     [
                         ft.Text("Log Outputs"),
-                        ft.Container(
-                            content=self.log_content,
-                            border=ft.border.all(1, "black"),
-                            height=400,
-                            width=300,
+                        ft.Column(
+                            [
+                                ft.Container(
+                                    content=(self.log_content),
+                                )
+                            ],
+                            height=450,
+                            width=400,
+                            scroll=ft.ScrollMode.ALWAYS,
                         ),
                     ],
-                    scroll=ft.ScrollMode.ALWAYS,
                 )
             ),
-            width="",
-            height="",
+            border=ft.border.all(1, "black"),
         )
 
         self.page.add(
@@ -295,8 +299,7 @@ class MainApp:
                                 [settings, scan_button, run_button, open_result_button]
                             )
                         ),
-                        margin=10,
-                        width=300,
+                        width="",
                     ),
                     log_outputs,
                 ]
@@ -310,11 +313,8 @@ class MainApp:
 
         # page setting
         self.page.title = "tremor_analysis"
-        self.page.window_width = 700  # 幅
-        self.page.window_height = 1100  # 高さ
-        self.page.window_top = ""  # 位置(TOP)
-        self.page.window_left = ""  # 位置(LEFT)
-        self.page.window_always_on_top = True  # ウィンドウを最前面に固定
+        self.page.window_width = ""  # 幅
+        self.page.window_height = ""  # 高さ
 
         self.build_ui()
         self.page.update()
@@ -324,7 +324,6 @@ class MainApp:
 class SpectrogramAnalysis:
     def __init__(self):
         self.data = 3
-        # self.frame_range = None
 
     def run(
         self,
