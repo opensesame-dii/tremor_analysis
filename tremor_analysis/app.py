@@ -47,8 +47,8 @@ class MainApp:
             """
             CoherenceAnalysis(),
             CoherenceAnalysisCapableTwoData(),
-            Power_densityAnalysis(),
-            Power_densityAnalysisCapableTwoData(),
+            PowerDensityAnalysis(),
+            PowerDensityAnalysisCapableTwoData(),
             SpectrogramAnalysis(),
             SpectrogramAnalysisCapableTwoData(),
             """,
@@ -62,16 +62,14 @@ class MainApp:
         results_1file: list[AnalysisResult] = []
         results_2files: list[AnalysisResult] = []
         file_list = self.scan()
-        data1 = np.zeros((10, 10))  # 仮
-        data2 = np.zeros((20, 20))
-        data = [data1, data2]
+        data = []
 
         for file_pair in file_list:
             # TODO: ファイル読み込み
             if len(file_pair) == 1:
                 # TODO: dataとして読み込み data = [data1]
-                with open(file_pair[0]) as read_data:
-                    data = read_data
+                with open(file_pair[0]) as data1:
+                    data = [data1]
                 pass
             elif len(file_pair) == 2:
                 # TODO: dataとして読み込み data = [data1, data2]
