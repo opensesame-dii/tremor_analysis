@@ -266,27 +266,26 @@ class MainApp:
                 scroll=ft.ScrollMode.ALWAYS,
             ),
             padding=25,
-            height=500,
+            height=self.page.window_height * 0.7,
         )
         log_outputs = ft.Container(
             content=(
                 ft.Column(
                     [
                         ft.Text("Log Outputs"),
-                        ft.Column(
-                            [
-                                ft.Container(
-                                    content=(self.log_content),
-                                )
-                            ],
-                            height=450,
-                            width=400,
-                            scroll=ft.ScrollMode.ALWAYS,
+                        ft.Container(
+                            content=ft.Column(
+                                [self.log_content],
+                                height=self.page.window_height * 0.7,
+                                width=400,
+                                scroll=ft.ScrollMode.ALWAYS,
+                            ),
+                            border=ft.border.all(1, "black"),
+                            padding=10,
                         ),
                     ],
                 )
             ),
-            border=ft.border.all(1, "black"),
         )
 
         self.page.add(
@@ -299,7 +298,6 @@ class MainApp:
                                 [settings, scan_button, run_button, open_result_button]
                             )
                         ),
-                        width="",
                     ),
                     log_outputs,
                 ]
@@ -313,8 +311,6 @@ class MainApp:
 
         # page setting
         self.page.title = "tremor_analysis"
-        self.page.window_width = ""  # 幅
-        self.page.window_height = ""  # 高さ
 
         self.build_ui()
         self.page.update()
