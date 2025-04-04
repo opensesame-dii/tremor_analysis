@@ -44,14 +44,6 @@ class MainApp:
             DummyAnalysis(),  # ここで解析手法のクラスをインスタンス化
             DummyAnalysisCapableTwoData(),
             # 他の解析手法もここに追加
-            """
-            CoherenceAnalysis(),
-            CoherenceAnalysisCapableTwoData(),
-            PowerDensityAnalysis(),
-            PowerDensityAnalysisCapableTwoData(),
-            SpectrogramAnalysis(),
-            SpectrogramAnalysisCapableTwoData(),
-            """,
         ]
         self.target_dir = ft.Text(value="Not Selected")
         self.log_content = ft.Text()
@@ -68,13 +60,14 @@ class MainApp:
             # TODO: ファイル読み込み
             if len(file_pair) == 1:
                 # TODO: dataとして読み込み data = [data1]
-                with open(file_pair[0]) as data1:
-                    data = [data1]
+                data = [np.loadtxt(file_pair[0], delimiter=",", dtype="unicode")]
                 pass
             elif len(file_pair) == 2:
                 # TODO: dataとして読み込み data = [data1, data2]
-                with open(file_pair[0], "r") as data1, open(file_pair[1], "r") as data2:
-                    data = [data1, data2]
+                data = [
+                    np.loadtxt(file_pair[0], delimiter=",", dtype="unicode"),
+                    np.loadtxt(file_pair[1], delimiter=",", dtype="unicode"),
+                ]
                 pass
             else:
                 raise NotImplementedError
