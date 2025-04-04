@@ -280,9 +280,11 @@ class MainApp:
                 + [method.configure_ui() for method in self.analysis_methods]
                 + [
                     apply_button,
-                ]
+                ],
+                scroll=ft.ScrollMode.ALWAYS,
             ),
             padding=25,
+            height=self.page.window_height * 0.7,
         )
         log_outputs = ft.Container(
             content=(
@@ -290,17 +292,18 @@ class MainApp:
                     [
                         ft.Text("Log Outputs"),
                         ft.Container(
-                            content=self.log_content,
+                            content=ft.Column(
+                                [self.log_content],
+                                height=self.page.window_height * 0.7,
+                                width=400,
+                                scroll=ft.ScrollMode.ALWAYS,
+                            ),
                             border=ft.border.all(1, "black"),
-                            height=400,
-                            width=300,
+                            padding=10,
                         ),
                     ],
-                    scroll=ft.ScrollMode.ALWAYS,
                 )
             ),
-            width="",
-            height="",
         )
 
         self.page.add(
@@ -313,8 +316,6 @@ class MainApp:
                                 [settings, scan_button, run_button, open_result_button]
                             )
                         ),
-                        margin=10,
-                        width=300,
                     ),
                     log_outputs,
                 ]
@@ -328,11 +329,6 @@ class MainApp:
 
         # page setting
         self.page.title = "tremor_analysis"
-        self.page.window_width = 700  # 幅
-        self.page.window_height = 1100  # 高さ
-        self.page.window_top = ""  # 位置(TOP)
-        self.page.window_left = ""  # 位置(LEFT)
-        self.page.window_always_on_top = True  # ウィンドウを最前面に固定
 
         self.build_ui()
         self.page.update()
@@ -342,7 +338,6 @@ class MainApp:
 class SpectrogramAnalysis:
     def __init__(self):
         self.data = 3
-        # self.frame_range = None
 
     def run(
         self,
