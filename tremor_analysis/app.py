@@ -269,7 +269,6 @@ class MainApp:
     # apply settings
     def apply(self) -> None:
         yaml_file_content_tmp: dict[str, Any] = {}
-        # TODO: 全体の設定が変わった時の処理を追加
         yaml_file_content_tmp["_general_"] = {
             key: general_config.value
             for key, general_config in self.general_setting_fields.items()
