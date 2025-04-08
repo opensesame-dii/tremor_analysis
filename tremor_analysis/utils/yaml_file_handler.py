@@ -22,7 +22,7 @@ class YamlFileHandler:
         self.content: dict[str, Any] = content  # デフォルト値
         if not os.path.isfile(self.file_path):  # yamlファイルが無かったら新規作成
             self.export_yaml()
-        self.content = self.import_yaml()   # 過去の設定を反映
+        self.content = self.import_yaml()  # 過去の設定を反映
         self.export_yaml()
 
     def import_yaml(self):
@@ -36,7 +36,7 @@ class YamlFileHandler:
             for key in current_file_content.keys():
                 if key in self.content:
                     self.content[key] = current_file_content[key]
-        return (self.content)
+        return self.content
 
     def export_yaml(self):
         """
