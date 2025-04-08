@@ -50,6 +50,7 @@ class MainApp:
                 for entry in method.config
             },
         )
+        self.apply_config_on_each_method()
         self.target_dir = ft.Text(value="Not Selected")
         self.log_content = ft.Text()
         self.file_num = 0
@@ -285,6 +286,7 @@ class MainApp:
         if yaml_file_content_tmp != self.yaml_file_handler.content:
             self.yaml_file_handler.content = yaml_file_content_tmp
             self.yaml_file_handler.export_yaml()
+        self.apply_config_on_each_method()
 
     def build_ui(self):
         self.folder_picker = ft.FilePicker(on_result=self.on_folder_picked)
@@ -305,11 +307,15 @@ class MainApp:
             on_click=self.on_apply_click,
         )
         self.general_setting_fields = {
-            general_config.name: TextFieldWithType(
-                dtype=general_config.type,
-                default_value=general_config.value,
+            config_key: TextFieldWithType(
+                dtype=list(
+                    filter(lambda x: x.name == config_key, self.CONFIG_DEFAULT_VALUE)
+                )[0].type,
+                default_value=config_value,
             )
-            for general_config in self.CONFIG_DEFAULT_VALUE
+            for config_key, config_value in self.yaml_file_handler.content[
+                "_general_"
+            ].items()
         }
         settings = ft.Container(
             content=ft.Column(
@@ -379,6 +385,11 @@ class MainApp:
             ),
         )
         return
+
+    def apply_config_on_each_method(self):
+        for method in self.analysis_methods:
+            config = self.yaml_file_handler.content[method.__class__.__name__]
+            method.update_config(config)
 
     def main(self, page: ft.Page):
 

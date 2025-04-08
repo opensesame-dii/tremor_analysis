@@ -114,3 +114,16 @@ class AnalysisMethodBase(ABC):
             ]
 
         return ft.Column(column)
+
+    def update_config(self, new_config: dict[str, Any]):
+        """
+        新しい設定項目の値を更新する．
+        Args:
+            new_config (dict[str, Any]): 新しい設定項目の値．
+                {項目名 (str): 値 (int or float)}
+        """
+        for key, value in new_config.items():
+            for config_entry in self.config:
+                if config_entry.name == key:
+                    config_entry.value = value
+                    break
