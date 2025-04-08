@@ -1,13 +1,35 @@
+from __future__ import annotations
+
+import dataclasses
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Any, Optional, Type, Union
 
 import flet as ft
 import numpy as np
 from PIL import Image
 
-from tremor_analysis.data_models.analysis_result import AnalysisResult
-from tremor_analysis.data_models.config_parameter import ConfigParameter
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
+
+
+@dataclasses.dataclass
+class AnalysisResult:
+    """
+    解析結果のデータを格納するクラス
+    解析結果の数値データと画像データを，それぞれの項目名をキーとするdictに格納する
+    """
+
+    numerical_result: dict[str, Union[int, float]]
+    image_result: dict[str, Image.Image]
+    analysis_method_class: Type[AnalysisMethodBase]
+    filename1: Optional[str]
+    filename2: Optional[str]
+
+
+@dataclasses.dataclass
+class ConfigParameter:
+    name: str
+    value: Any
+    type: Union[Type[int], Type[float]]
 
 
 class AnalysisMethodBase(ABC):
@@ -61,6 +83,9 @@ class AnalysisMethodBase(ABC):
         return AnalysisResult(
             numerical_result={"value1": 1, "value2": 2},
             image_result={"image1": Image.new("RGB", (1, 1))},
+            analysis_method_class=type(self),
+            filename1=None,
+            filename2=None,
         )
 
     def configure_ui(self) -> ft.Control:
@@ -75,12 +100,10 @@ class AnalysisMethodBase(ABC):
         self.configure_ui_components = {}
         column = []
         for config_entry in self.config:
-            self.configure_ui_components[config_entry.name] = (
-                TextFieldWithType(
-                    dtype=config_entry.type,
-                    default_value=config_entry.value,
-                ).widget
-            )
+            self.configure_ui_components[config_entry.name] = TextFieldWithType(
+                dtype=config_entry.type,
+                default_value=config_entry.value,
+            ).widget
             column += [
                 ft.Row(
                     [

@@ -22,8 +22,11 @@ class DummyAnalysis(AnalysisMethodBase):
 
     def run(self, data) -> AnalysisResult:
         return AnalysisResult(
+            analysis_method_class=DummyAnalysis,
             numerical_result={"value1": 1, "value2": 2},
             image_result={"image1": Image.new("RGB", (1, 1))},
+            filename1=None,  # ファイル名を取得する
+            filename2=None,
         )
 
 
@@ -44,4 +47,7 @@ class DummyAnalysisCapableTwoData(AnalysisMethodBase):
         return AnalysisResult(
             numerical_result={"value1": 1, "value2": 2},
             image_result={"image1": Image.new("RGB", (1, 1))},
+            analysis_method_class=type(self),
+            filename1=None,
+            filename2=None,
         )

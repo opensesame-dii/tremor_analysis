@@ -2,6 +2,7 @@ import csv
 import os
 import platform
 import subprocess
+from pathlib import Path
 from typing import Any
 
 import flet as ft
@@ -9,14 +10,14 @@ import numpy as np
 import yaml
 from flet import ControlEvent
 
-from tremor_analysis.analysis_methods.base import AnalysisMethodBase
+from tremor_analysis.analysis_methods.base import AnalysisMethodBase, AnalysisResult
 from tremor_analysis.analysis_methods.dummy import (
     DummyAnalysis,
     DummyAnalysisCapableTwoData,
 )
 from tremor_analysis.data_models.config_parameter import ConfigParameter
-from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
+from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
 
 
 class MainApp:
@@ -27,6 +28,8 @@ class MainApp:
         ConfigParameter(name="Column start", value=1, type=int),
         ConfigParameter(name="Encoding", value="utf-8", type=str),
     ]
+    OUTPUT_FILE_EXTENSION = ".tremor.csv"
+    ACCEPTABLE_FILE_EXTENSION = ".csv"
 
     def __init__(self) -> None:
         self.analysis_methods: list[AnalysisMethodBase] = [
@@ -49,38 +52,126 @@ class MainApp:
         )
         self.target_dir = ft.Text(value="Not Selected")
         self.log_content = ft.Text()
+        self.file_num = 0
+        self.pairs_num = 0
 
     def run(self):
-        # ここでscan()も呼ぶべきかも(20240225ミーティングより)
+        results_1file: list[AnalysisResult] = []
+        results_2files: list[AnalysisResult] = []
+        file_list = self.scan()
         data1 = np.zeros((10, 10))  # 仮
         data2 = np.zeros((20, 20))
+        data = [data1, data2]
 
-        for method in self.analysis_methods:
-            if method.ACCEPTABLE_DATA_COUNT == 1:
-                result = method.run(
-                    [data1]
-                )  # 全ての解析手法が，runメソッドを持っていることを前提とする
-            elif method.ACCEPTABLE_DATA_COUNT == 2:
-                # 左右の手のデータペアを受け入れる解析
-                # TODO: データがペアで与えられなかった時の処理
-                method.run([data1, data2])
+        for file_pair in file_list:
+            # TODO: ファイル読み込み
+            if len(file_pair) == 1:
+                # TODO: dataとして読み込み data = [data1]
+                pass
+            elif len(file_pair) == 2:
+                # TODO: dataとして読み込み data = [data1, data2]
+                pass
             else:
                 raise NotImplementedError
         if self.target_dir:
-            self.output_file = os.path.join(
-                self.target_dir.value, "result.tremor.csv"
-            )
+            self.output_file = os.path.join(self.target_dir.value, "result.tremor.csv")
             with open(self.output_file, "w") as file:
                 writer = csv.writer(file)
                 for key, value in result.numerical_result.items():
                     writer.writerows([[key, value]])
-            self.output_image_file = os.path.join(
-                self.target_dir.value, "image.png"
-            )
+            self.output_image_file = os.path.join(self.target_dir.value, "image.png")
             for key, image in result.image_result.items():
                 image.save(self.output_image_file)
+            for method in self.analysis_methods:
+                if method.ACCEPTABLE_DATA_COUNT == 1:
+                    for i, file in enumerate(file_pair):
+                        result = method.run(data)
+                        result.filename1 = file_pair[0]
+                        results_1file.append(result)
+                elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 2:
+                    # 左右の手のデータペアを受け入れる解析
+                    result = method.run(data)
+                    result.filename1 = file_pair[0]
+                    result.filename2 = file_pair[1]
+                    results_2files.append(result)
+                elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 1:
+                    pass
+                else:
+                    raise NotImplementedError
+        self.append_result_file(
+            results_1file=results_1file,
+            results_2files=results_2files,
+        )
 
-            print("file created")
+    def append_result_file(
+        self,
+        results_1file: list[AnalysisResult],  # ファイル名：結果
+        results_2files: list[AnalysisResult],
+    ) -> None:
+
+        #  単一ファイルの結果出力
+        output_1file = os.path.join(
+            self.target_dir.value, "result_1file" + self.OUTPUT_FILE_EXTENSION
+        )
+        #  一通りの結果の列名をmethod_result.numerical_resultから取得してヘッダー作成
+
+        header = []
+        header += [
+            f"{results_1file[0].analysis_method_class.__qualname__}_{key}"
+            for key in results_1file[0].numerical_result.keys()
+        ]
+        #  出力先ファイルの存在確認,なかったらheader書き込み
+        if not os.path.isfile(output_1file):
+            with open(output_1file, "w", newline="") as file:
+                writer = csv.writer(file)
+                writer.writerow(["filename"] + header)
+        with open(output_1file, "a", newline="") as file:
+            writer = csv.writer(file)
+            # method_result.numerical_resultのキーに対して総当たりで， f"{method_result.analysis_method_class.__qualname__}_{key}" がheaderの要素と一致するものを検索
+            # それの値を書き込み
+            for filename in list(result.filename1 for result in results_1file):
+                # headerの要素に対するループ
+                for method_result in results_1file:
+                    #  クラス名_key: valueの新しいresultリストを作成
+                    result_with_class = {
+                        f"{method_result.analysis_method_class.__qualname__}_{key}": value
+                        for key, value in method_result.numerical_result.items()
+                    }
+                    result_row = [
+                        result_with_class[header_key] for header_key in header
+                    ]
+                writer.writerow([filename] + result_row)
+
+        output_2files = os.path.join(
+            self.target_dir.value, "result_2file" + self.OUTPUT_FILE_EXTENSION
+        )
+
+        if len(results_2files) != 0:
+            # 一通りの結果の列名をmethod_result.numerical_resultから取得してヘッダー作成
+            header = []
+            header += [
+                f"{results_2files[0].analysis_method_class.__qualname__}_{key}"
+                for key in results_2files[0].numerical_result.keys()
+            ]
+            # 出力先ファイルの存在確認,なかったらheader書き込み
+            if not os.path.isfile(output_2files):
+                with open(output_2files, "w", newline="") as file:
+                    writer = csv.writer(file)
+                    writer.writerow(["filename1", "filename2"] + header)
+            with open(output_2files, "a", newline="") as file:
+                writer = csv.writer(file)
+
+                for results in results_2files:
+                    #  クラス名_key: valueの新しいresultリストを作成
+                    result_with_class = {
+                        f"{results.analysis_method_class.__qualname__}_{key}": value
+                        for key, value in results.numerical_result.items()
+                    }
+                    result_row = [
+                        result_with_class[header_key] for header_key in header
+                    ]
+                    writer.writerow([results.filename1, results.filename2] + result_row)
+            pass
 
     def on_run_click(self, e: ControlEvent):
         """Buttonのon_clickでは, 引数にControlEventが渡されるが，run()では不要のため, この関数でwrapしている
@@ -115,7 +206,7 @@ class MainApp:
         self.scan()
 
     # scan directory
-    def scan(self):
+    def scan(self) -> list[list[str]]:
         if self.target_dir.value != "Not Selected":
             file_list = []
             self.file_num = 0
@@ -128,14 +219,13 @@ class MainApp:
                 csv_files = [
                     f
                     for f in os.listdir(directory)
-                    if f.endswith(".csv") and not f.endswith(".tremor.csv")
+                    if f.endswith(self.ACCEPTABLE_FILE_EXTENSION)
+                    and not f.endswith(self.OUTPUT_FILE_EXTENSION)
                 ]
                 self.file_num += len(csv_files)
                 if len(csv_files) == 2:
                     file_list.append(
-                        tuple(
-                            os.path.join(directory, file) for file in csv_files
-                        )
+                        tuple(os.path.join(directory, file) for file in csv_files)
                     )
                     self.pairs_num += 1
 
@@ -156,6 +246,7 @@ class MainApp:
             self.log_content.value = "No folder is selected"
 
         self.page.update()
+        return file_list
 
     def on_open_result_click(self, _: ft.ControlEvent):
         self.open_result()
@@ -199,15 +290,11 @@ class MainApp:
         self.page.overlay.append(self.folder_picker)
         select_folder_button = ft.Row(
             [
-                ft.OutlinedButton(
-                    text="Select Folder", on_click=self.show_pick_folder
-                ),
+                ft.OutlinedButton(text="Select Folder", on_click=self.show_pick_folder),
                 self.target_dir,
             ]
         )
-        scan_button = ft.OutlinedButton(
-            text="Scan", on_click=self.on_scan_click
-        )
+        scan_button = ft.OutlinedButton(text="Scan", on_click=self.on_scan_click)
         run_button = ft.OutlinedButton(text="Run", on_click=self.on_run_click)
         open_result_button = ft.OutlinedButton(
             text="Open Result", on_click=self.on_open_result_click
@@ -237,8 +324,14 @@ class MainApp:
                 + [
                     apply_button,
                 ]
+                + [method.configure_ui() for method in self.analysis_methods]
+                + [
+                    apply_button,
+                ],
+                scroll=ft.ScrollMode.ALWAYS,
             ),
             padding=25,
+            height=self.page.window_height * 0.7,
         )
         log_outputs = ft.Container(
             content=(
@@ -246,17 +339,18 @@ class MainApp:
                     [
                         ft.Text("Log Outputs"),
                         ft.Container(
-                            content=self.log_content,
+                            content=ft.Column(
+                                [self.log_content],
+                                height=self.page.window_height * 0.7,
+                                width=400,
+                                scroll=ft.ScrollMode.ALWAYS,
+                            ),
                             border=ft.border.all(1, "black"),
-                            height=400,
-                            width=300,
+                            padding=10,
                         ),
                     ],
-                    scroll=ft.ScrollMode.ALWAYS,
                 )
             ),
-            width="",
-            height="",
         )
 
         self.page.add(
@@ -274,8 +368,6 @@ class MainApp:
                                 ]
                             )
                         ),
-                        margin=10,
-                        width=300,
                     ),
                     log_outputs,
                 ]
@@ -289,11 +381,6 @@ class MainApp:
 
         # page setting
         self.page.title = "tremor_analysis"
-        self.page.window_width = 700  # 幅
-        self.page.window_height = ""  # 高さ
-        self.page.window_top = ""  # 位置(TOP)
-        self.page.window_left = ""  # 位置(LEFT)
-        self.page.window_always_on_top = True  # ウィンドウを最前面に固定
 
         self.build_ui()
         self.page.update()
@@ -303,7 +390,6 @@ class MainApp:
 class SpectrogramAnalysis:
     def __init__(self):
         self.data = 3
-        # self.frame_range = None
 
     def run(
         self,
