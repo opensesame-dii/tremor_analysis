@@ -282,7 +282,7 @@ class MainApp:
                 config.value = ui_component.value
                 yaml_file_content_tmp[method.__class__.__name__][
                     config.name
-                ] = ui_component.value
+                ] = ui_component.value  # TODO: このへん型のキャストがうまくいってない
         if yaml_file_content_tmp != self.yaml_file_handler.content:
             self.yaml_file_handler.content = yaml_file_content_tmp
             self.yaml_file_handler.export_yaml()
