@@ -66,6 +66,12 @@ class AnalysisMethodBase(ABC):
             for item in config:
                 name_to_item[item.name] = item
             self.config = list(name_to_item.values())
+        self.configure_ui_components: dict[str, Any] = {}
+        for config_entry in self.config:
+            self.configure_ui_components[config_entry.name] = TextFieldWithType(
+                dtype=config_entry.type,
+                default_value=config_entry.value,
+            )
 
     @abstractmethod
     def run(self, data: list[np.ndarray]) -> AnalysisResult:
@@ -97,18 +103,13 @@ class AnalysisMethodBase(ABC):
             ft.Control: 設定項目のUI．
 
         """
-        self.configure_ui_components = {}
         column = []
         for config_entry in self.config:
-            self.configure_ui_components[config_entry.name] = TextFieldWithType(
-                dtype=config_entry.type,
-                default_value=config_entry.value,
-            ).widget
             column += [
                 ft.Row(
                     [
                         ft.Text(config_entry.name),
-                        self.configure_ui_components[config_entry.name],
+                        self.configure_ui_components[config_entry.name].widget,
                     ]
                 ),
             ]
