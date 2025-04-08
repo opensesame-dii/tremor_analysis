@@ -19,10 +19,10 @@ from tremor_analysis.data_models.config_parameter import ConfigParameter
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
 from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
 
+CONFIG_FILE_PATH = Path.home() / ".tremor_analysis_config.yaml"
+
 
 class MainApp:
-    # TODO: pathlib使って書き直す
-    CONFIG_FILE_PATH = ".tremor_analysis_config.yaml"
     CONFIG_DEFAULT_VALUE: list[ConfigParameter] = [
         ConfigParameter(name="Row start", value=1, type=int),
         ConfigParameter(name="Column start", value=1, type=int),
@@ -39,7 +39,7 @@ class MainApp:
             # 他の解析手法もここに追加
         ]
         self.yaml_file_handler = YamlFileHandler(
-            self.CONFIG_FILE_PATH,
+            CONFIG_FILE_PATH,
             {
                 "_general_": {default.name: default.value}
                 for default in self.CONFIG_DEFAULT_VALUE
@@ -182,14 +182,14 @@ class MainApp:
         self.run()
 
     def read_config_file(self, e: ControlEvent):
-        with open("config.yaml") as file:
+        with open(CONFIG_FILE_PATH) as file:
             self.config = yaml.safe_load(file)
         print(self.config)
 
     def write_config_file(self, e: ControlEvent):
         self.config["key1"] = "change"
         self.config["add_key"] = "add"
-        with open("config.yaml", "w") as file:
+        with open(CONFIG_FILE_PATH, "w") as file:
             yaml.dump(self.config, file)
         print(self.config)
 
@@ -398,7 +398,7 @@ class SpectrogramAnalysis:
         self.answer = {"answer": self.val}
 
     def import_config(self):
-        with open("config.yaml") as file:
+        with open(CONFIG_FILE_PATH) as file:
             self.config = yaml.safe_load(file)
         self.max = self.config["SpectrogramAnalysis"]["max"]
         self.min = self.config["SpectrogramAnalysis"]["min"]
