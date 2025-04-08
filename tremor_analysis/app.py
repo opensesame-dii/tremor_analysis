@@ -334,10 +334,6 @@ class MainApp:
                 + [method.configure_ui() for method in self.analysis_methods]
                 + [
                     apply_button,
-                ]
-                + [method.configure_ui() for method in self.analysis_methods]
-                + [
-                    apply_button,
                 ],
                 scroll=ft.ScrollMode.ALWAYS,
             ),
