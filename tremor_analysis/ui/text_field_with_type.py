@@ -27,9 +27,7 @@ class TextFieldWithType:
                 value=default_value,
             )
         else:
-            raise NotImplementedError(
-                "CustomTextField.dtype must be int, float or str"
-            )
+            raise NotImplementedError("CustomTextField.dtype must be int, float or str")
 
     @property
     def value(self):

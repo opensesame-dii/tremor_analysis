@@ -55,6 +55,8 @@ class MainApp:
         self.file_num = 0
         self.pairs_num = 0
 
+        self.general_setting_fields: dict[str, TextFieldWithType] = {}
+
     def run(self):
         results_1file: list[AnalysisResult] = []
         results_2files: list[AnalysisResult] = []
@@ -269,8 +271,8 @@ class MainApp:
         yaml_file_content_tmp: dict[str, Any] = {}
         # TODO: 全体の設定が変わった時の処理を追加
         yaml_file_content_tmp["_general_"] = {
-            general_config.name: general_config.value  # TODO: ここでgeneral_config.valueを更新したい
-            for general_config in self.CONFIG_DEFAULT_VALUE
+            key: general_config.value
+            for key, general_config in self.general_setting_fields.items()
         }
         for method in self.analysis_methods:
             yaml_file_content_tmp[method.__class__.__name__] = {}
@@ -303,6 +305,13 @@ class MainApp:
             text="Apply&Save Settings",
             on_click=self.on_apply_click,
         )
+        self.general_setting_fields = {
+            general_config.name: TextFieldWithType(
+                dtype=general_config.type,
+                default_value=general_config.value,
+            )
+            for general_config in self.CONFIG_DEFAULT_VALUE
+        }
         settings = ft.Container(
             content=ft.Column(
                 [
@@ -312,10 +321,7 @@ class MainApp:
                     ft.Row(
                         [
                             ft.Text(general_config.name),
-                            TextFieldWithType(
-                                dtype=general_config.type,
-                                default_value=general_config.value,
-                            ).widget,
+                            self.general_setting_fields[general_config.name].widget,
                         ]
                     )
                     for general_config in self.CONFIG_DEFAULT_VALUE
