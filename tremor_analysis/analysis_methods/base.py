@@ -103,7 +103,7 @@ class AnalysisMethodBase(ABC):
             ft.Control: 設定項目のUI．
 
         """
-        column = []
+        column = [ft.Text(self.__class__.__name__)]
         for config_entry in self.config:
             column += [
                 ft.Row(
