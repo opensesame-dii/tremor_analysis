@@ -127,4 +127,5 @@ class AnalysisMethodBase(ABC):
             for config_entry in self.config:
                 if config_entry.name == key:
                     config_entry.value = value
+                    self.configure_ui_components[key].widget.value = str(value)
                     break
