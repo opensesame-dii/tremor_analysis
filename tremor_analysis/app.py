@@ -57,16 +57,45 @@ class MainApp:
         data = []
 
         for file_pair in file_list:
+            # TODO: 正確な値に置き換え
+            row_start: int = 10
+            column_start: int = 1
+            sensor_num: int = 3
+            encoding: str = "utf-8"
             # TODO: ファイル読み込み
             if len(file_pair) == 1:
                 # TODO: dataとして読み込み data = [data1]
-                data = [np.loadtxt(file_pair[0], delimiter=",", dtype="unicode")]
+
+                data = [
+                    np.loadtxt(
+                        file_pair[0],
+                        delimiter=",",
+                        dtype="unicode",
+                        skiprows=row_start - 1,
+                        usecols=range(column_start - 1, column_start + 9),  # TODO: ?
+                        encoding=encoding,
+                    )
+                ]
                 pass
             elif len(file_pair) == 2:
                 # TODO: dataとして読み込み data = [data1, data2]
                 data = [
-                    np.loadtxt(file_pair[0], delimiter=",", dtype="unicode"),
-                    np.loadtxt(file_pair[1], delimiter=",", dtype="unicode"),
+                    np.loadtxt(
+                        file_pair[0],
+                        delimiter=",",
+                        dtype="unicode",
+                        skiprows=row_start - 1,
+                        usecols=range(column_start - 1, column_start + 9),
+                        encoding=encoding,
+                    ),
+                    np.loadtxt(
+                        file_pair[1],
+                        delimiter=",",
+                        dtype="unicode",
+                        skiprows=row_start - 1,
+                        usecols=range(column_start - 1, column_start + 9),
+                        encoding=encoding,
+                    ),
                 ]
                 pass
             else:
