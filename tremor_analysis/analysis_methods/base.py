@@ -8,6 +8,8 @@ import flet as ft
 import numpy as np
 from PIL import Image
 
+from tremor_analysis.ui.text_field_with_type import TextFieldWithType
+
 
 @dataclasses.dataclass
 class AnalysisResult:
@@ -64,6 +66,12 @@ class AnalysisMethodBase(ABC):
             for item in config:
                 name_to_item[item.name] = item
             self.config = list(name_to_item.values())
+        self.configure_ui_components: dict[str, Any] = {}
+        for config_entry in self.config:
+            self.configure_ui_components[config_entry.name] = TextFieldWithType(
+                dtype=config_entry.type,
+                default_value=config_entry.value,
+            )
 
     @abstractmethod
     def run(self, data: list[np.ndarray]) -> AnalysisResult:
@@ -83,7 +91,7 @@ class AnalysisMethodBase(ABC):
             image_result={"image1": Image.new("RGB", (1, 1))},
             analysis_method_class=type(self),
             filename1=None,
-            filenam2=None,
+            filename2=None,
         )
 
     def configure_ui(self) -> ft.Control:
@@ -95,19 +103,29 @@ class AnalysisMethodBase(ABC):
             ft.Control: 設定項目のUI．
 
         """
-        self.configure_ui_components = {}
-        column = []
+        column = [ft.Text(self.__class__.__name__)]
         for config_entry in self.config:
-            self.configure_ui_components[config_entry.name] = ft.TextField(
-                value=config_entry.value
-            )  # TODO: TextFieldWithTypeに置き換え
             column += [
                 ft.Row(
                     [
                         ft.Text(config_entry.name),
-                        self.configure_ui_components[config_entry.name],
+                        self.configure_ui_components[config_entry.name].widget,
                     ]
                 ),
             ]
 
         return ft.Column(column)
+
+    def update_config(self, new_config: dict[str, Any]):
+        """
+        新しい設定項目の値を更新する．
+        Args:
+            new_config (dict[str, Any]): 新しい設定項目の値．
+                {項目名 (str): 値 (int or float)}
+        """
+        for key, value in new_config.items():
+            for config_entry in self.config:
+                if config_entry.name == key:
+                    config_entry.value = value
+                    self.configure_ui_components[key].widget.value = str(value)
+                    break

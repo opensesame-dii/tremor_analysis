@@ -1,21 +1,17 @@
-from typing import Any, Optional
+from typing import Optional
 
 from PIL import Image
 
-from tremor_analysis.analysis_methods.base import (
-    AnalysisMethodBase,
-    AnalysisResult,
-    ConfigParameter,
-)
+from tremor_analysis.analysis_methods.base import AnalysisMethodBase
+from tremor_analysis.data_models.analysis_result import AnalysisResult
+from tremor_analysis.data_models.config_parameter import ConfigParameter
 
 
 class DummyAnalysis(AnalysisMethodBase):
     ACCEPTABLE_DATA_COUNT = 1
     config = [
-        ConfigParameter(name="sampling_rate (Hz)", value=200, type=int),
-        ConfigParameter(name="nperseg (n)", value=512, type=int),
-        ConfigParameter(name="min_frequency (Hz)", value=2, type=int),
-        ConfigParameter(name="min_frequency (Hz)", value=20, type=int),
+        ConfigParameter(name="sampling_rate (Hz, float)", value=200, type=float),
+        ConfigParameter(name="nperseg (n, int)", value=512, type=int),
     ]
 
     def __init__(
@@ -37,10 +33,8 @@ class DummyAnalysis(AnalysisMethodBase):
 class DummyAnalysisCapableTwoData(AnalysisMethodBase):
     ACCEPTABLE_DATA_COUNT = 2
     config = [
-        ConfigParameter(name="sampling_rate (Hz)", value=200, type=int),
-        ConfigParameter(name="nperseg (n)", value=512, type=int),
-        ConfigParameter(name="min_frequency (Hz)", value=2, type=int),
-        ConfigParameter(name="min_frequency (Hz)", value=20, type=int),
+        ConfigParameter(name="min_frequency (Hz, int)", value=2, type=int),
+        ConfigParameter(name="max_frequency (Hz, int)", value=20, type=int),
     ]
 
     def __init__(
