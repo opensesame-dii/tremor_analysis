@@ -1,5 +1,4 @@
 import csv
-import itertools
 import os
 import platform
 import subprocess
@@ -16,25 +15,20 @@ from tremor_analysis.analysis_methods.dummy import (
     DummyAnalysis,
     DummyAnalysisCapableTwoData,
 )
-
-"""
-from tremor_analysis.analysis_methods.coherence import (
-    CoherenceAnalysis,
-    CoherenceAnalysisCapableTwoData,
-)
-from tremor_analysis.analysis_methods.PowerDensity import (
-    PowerDensityAnalysis,
-    PowerDensityAnalysisCapableTwoData,
-)
-from tremor_analysis.analysis_methods.Spectrogram import (
-    SpectrogramAnalysis,
-    SpectrogramAnalysisCapableTwoData,
-)
-"""
 from tremor_analysis.utils.path import remove_extension
+from tremor_analysis.data_models.config_parameter import ConfigParameter
+from tremor_analysis.ui.text_field_with_type import TextFieldWithType
+from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
+
+CONFIG_FILE_PATH = Path.home() / ".tremor_analysis_config.yaml"
 
 
 class MainApp:
+    CONFIG_DEFAULT_VALUE: list[ConfigParameter] = [
+        ConfigParameter(name="Row start", value=1, type=int),
+        ConfigParameter(name="Column start", value=1, type=int),
+        ConfigParameter(name="Encoding", value="utf-8", type=str),
+    ]
     OUTPUT_FILE_EXTENSION = ".tremor.csv"
     ACCEPTABLE_FILE_EXTENSION = ".csv"
 
@@ -45,10 +39,25 @@ class MainApp:
             DummyAnalysisCapableTwoData(),
             # 他の解析手法もここに追加
         ]
+        self.yaml_file_handler = YamlFileHandler(
+            CONFIG_FILE_PATH,
+            {
+                "_general_": {default.name: default.value}
+                for default in self.CONFIG_DEFAULT_VALUE
+            }
+            | {
+                method.__class__.__name__: {entry.name: entry.value}
+                for method in self.analysis_methods
+                for entry in method.config
+            },
+        )
+        self.apply_config_on_each_method()
         self.target_dir = ft.Text(value="Not Selected")
         self.log_content = ft.Text()
         self.file_num = 0
         self.pairs_num = 0
+
+        self.general_setting_fields: dict[str, TextFieldWithType] = {}
 
     def run(self):
         results_1file: list[AnalysisResult] = []
@@ -100,7 +109,15 @@ class MainApp:
                 pass
             else:
                 raise NotImplementedError
-
+        if self.target_dir:
+            self.output_file = os.path.join(self.target_dir.value, "result.tremor.csv")
+            with open(self.output_file, "w") as file:
+                writer = csv.writer(file)
+                for key, value in result.numerical_result.items():
+                    writer.writerows([[key, value]])
+            self.output_image_file = os.path.join(self.target_dir.value, "image.png")
+            for key, image in result.image_result.items():
+                image.save(self.output_image_file)
             for method in self.analysis_methods:
                 if method.ACCEPTABLE_DATA_COUNT == 1:
                     for i, file in enumerate(file_pair):
@@ -201,14 +218,14 @@ class MainApp:
         self.run()
 
     def read_config_file(self, e: ControlEvent):
-        with open("config.yaml") as file:
+        with open(CONFIG_FILE_PATH) as file:
             self.config = yaml.safe_load(file)
         print(self.config)
 
     def write_config_file(self, e: ControlEvent):
         self.config["key1"] = "change"
         self.config["add_key"] = "add"
-        with open("config.yaml", "w") as file:
+        with open(CONFIG_FILE_PATH, "w") as file:
             yaml.dump(self.config, file)
         print(self.config)
 
@@ -280,6 +297,30 @@ class MainApp:
             subprocess.Popen(["xdg-open", self.target_dir.value])
         return
 
+    def on_apply_click(self, _: ft.ControlEvent) -> None:
+        self.apply()
+
+    # apply settings
+    def apply(self) -> None:
+        yaml_file_content_tmp: dict[str, Any] = {}
+        yaml_file_content_tmp["_general_"] = {
+            key: general_config.value
+            for key, general_config in self.general_setting_fields.items()
+        }
+        for method in self.analysis_methods:
+            yaml_file_content_tmp[method.__class__.__name__] = {}
+            for config, config_component in zip(
+                method.config, method.configure_ui_components.values()
+            ):
+                config.value = config_component.value
+                yaml_file_content_tmp[method.__class__.__name__][
+                    config.name
+                ] = config_component.value
+        if yaml_file_content_tmp != self.yaml_file_handler.content:
+            self.yaml_file_handler.content = yaml_file_content_tmp
+            self.yaml_file_handler.export_yaml()
+        self.apply_config_on_each_method()
+
     def build_ui(self):
         self.folder_picker = ft.FilePicker(on_result=self.on_folder_picked)
         self.page.overlay.append(self.folder_picker)
@@ -294,17 +335,34 @@ class MainApp:
         open_result_button = ft.OutlinedButton(
             text="Open Result", on_click=self.on_open_result_click
         )
-        apply_button = ft.OutlinedButton(text="Apply&Save Settings", on_click="")
+        apply_button = ft.OutlinedButton(
+            text="Apply&Save Settings",
+            on_click=self.on_apply_click,
+        )
+        self.general_setting_fields = {
+            config_key: TextFieldWithType(
+                dtype=list(
+                    filter(lambda x: x.name == config_key, self.CONFIG_DEFAULT_VALUE)
+                )[0].type,
+                default_value=config_value,
+            )
+            for config_key, config_value in self.yaml_file_handler.content[
+                "_general_"
+            ].items()
+        }
         settings = ft.Container(
             content=ft.Column(
                 [
                     ft.Text("General Settings"),
-                    ft.Row([ft.Text("Row start"), ft.TextField(height=40, width=50)]),
+                ]
+                + [
                     ft.Row(
-                        [ft.Text("Column start"), ft.TextField(height=40, width=50)]
-                    ),
-                    ft.Row([ft.Text("Sensors num"), ft.TextField(height=40, width=50)]),
-                    ft.Row([ft.Text("Encoding"), ft.TextField(height=40, width=100)]),
+                        [
+                            ft.Text(general_config.name),
+                            self.general_setting_fields[general_config.name].widget,
+                        ]
+                    )
+                    for general_config in self.CONFIG_DEFAULT_VALUE
                 ]
                 + [method.configure_ui() for method in self.analysis_methods]
                 + [
@@ -342,7 +400,12 @@ class MainApp:
                     ft.Container(
                         content=(
                             ft.Column(
-                                [settings, scan_button, run_button, open_result_button]
+                                [
+                                    settings,
+                                    scan_button,
+                                    run_button,
+                                    open_result_button,
+                                ]
                             )
                         ),
                     ),
@@ -351,6 +414,11 @@ class MainApp:
             ),
         )
         return
+
+    def apply_config_on_each_method(self):
+        for method in self.analysis_methods:
+            config = self.yaml_file_handler.content[method.__class__.__name__]
+            method.update_config(config)
 
     def main(self, page: ft.Page):
 
@@ -375,7 +443,7 @@ class SpectrogramAnalysis:
         self.answer = {"answer": self.val}
 
     def import_config(self):
-        with open("config.yaml") as file:
+        with open(CONFIG_FILE_PATH) as file:
             self.config = yaml.safe_load(file)
         self.max = self.config["SpectrogramAnalysis"]["max"]
         self.min = self.config["SpectrogramAnalysis"]["min"]
