@@ -41,8 +41,9 @@ class MainApp:
         self.yaml_file_handler = YamlFileHandler(
             CONFIG_FILE_PATH,
             {
-                "_general_": {default.name: default.value}
-                for default in self.CONFIG_DEFAULT_VALUE
+                "_general_": {
+                    default.name: default.value for default in self.CONFIG_DEFAULT_VALUE
+                }
             }
             | {
                 method.__class__.__name__: {entry.name: entry.value}
