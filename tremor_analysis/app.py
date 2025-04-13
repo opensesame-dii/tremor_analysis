@@ -15,7 +15,6 @@ from tremor_analysis.analysis_methods.dummy import (
     DummyAnalysis,
     DummyAnalysisCapableTwoData,
 )
-from tremor_analysis.utils.path import remove_extension
 from tremor_analysis.data_models.config_parameter import ConfigParameter
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
 from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
