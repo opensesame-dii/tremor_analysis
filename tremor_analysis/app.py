@@ -46,9 +46,10 @@ class MainApp:
                 }
             }
             | {
-                method.__class__.__name__: {entry.name: entry.value}
+                method.__class__.__name__: {
+                    entry.name: entry.value for entry in method.config
+                }
                 for method in self.analysis_methods
-                for entry in method.config
             },
         )
         self.apply_config_on_each_method()
