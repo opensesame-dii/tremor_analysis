@@ -393,6 +393,8 @@ class MainApp:
 
         # page setting
         self.page.title = "tremor_analysis"
+        self.page.window_height = 750
+        self.page.window_width = 1000
 
         self.build_ui()
         self.page.update()
