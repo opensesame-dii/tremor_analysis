@@ -20,6 +20,7 @@ from tremor_analysis.ui.text_field_with_type import TextFieldWithType
 from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
 
 CONFIG_FILE_PATH = Path.home() / ".tremor_analysis_config.yaml"
+GENERAL_SETTINGS_KEY = "_general_"
 
 
 class MainApp:
@@ -41,7 +42,7 @@ class MainApp:
         self.yaml_file_handler = YamlFileHandler(
             CONFIG_FILE_PATH,
             {
-                "_general_": {
+                GENERAL_SETTINGS_KEY: {
                     default.name: default.value for default in self.CONFIG_DEFAULT_VALUE
                 }
             }
@@ -272,7 +273,7 @@ class MainApp:
     # apply settings
     def apply_settings(self) -> None:
         yaml_file_content_tmp: dict[str, Any] = {}
-        yaml_file_content_tmp["_general_"] = {
+        yaml_file_content_tmp[GENERAL_SETTINGS_KEY] = {
             key: general_config.value
             for key, general_config in self.general_setting_fields.items()
         }
@@ -316,7 +317,7 @@ class MainApp:
                 default_value=config_value,
             )
             for config_key, config_value in self.yaml_file_handler.content[
-                "_general_"
+                GENERAL_SETTINGS_KEY
             ].items()
         }
         settings = ft.Container(
