@@ -265,11 +265,11 @@ class MainApp:
             subprocess.Popen(["xdg-open", self.target_dir.value])
         return
 
-    def on_apply_click(self, _: ft.ControlEvent) -> None:
-        self.apply()
+    def on_apply_setting_click(self, _: ft.ControlEvent) -> None:
+        self.apply_settings()
 
     # apply settings
-    def apply(self) -> None:
+    def apply_settings(self) -> None:
         yaml_file_content_tmp: dict[str, Any] = {}
         yaml_file_content_tmp["_general_"] = {
             key: general_config.value
@@ -305,7 +305,7 @@ class MainApp:
         )
         apply_button = ft.OutlinedButton(
             text="Apply&Save Settings",
-            on_click=self.on_apply_click,
+            on_click=self.on_apply_setting_click,
         )
         self.general_setting_fields = {
             config_key: TextFieldWithType(
