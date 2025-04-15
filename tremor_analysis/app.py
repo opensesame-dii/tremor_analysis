@@ -317,21 +317,27 @@ class MainApp:
                 "_general_"
             ].items()
         }
+
         settings = ft.Container(
             content=ft.Column(
                 [
                     ft.Column(
                         [
-                            ft.Text("General Settings"),
+                            ft.Text(
+                                "General Settings", size=15, weight=ft.FontWeight.BOLD
+                            ),
                         ]
                         + [
-                            ft.Row(
-                                [
-                                    ft.Text(general_config.name),
-                                    self.general_setting_fields[
-                                        general_config.name
-                                    ].widget,
-                                ]
+                            ft.Container(
+                                ft.Row(
+                                    [
+                                        ft.Text(general_config.name),
+                                        self.general_setting_fields[
+                                            general_config.name
+                                        ].widget,
+                                    ]
+                                ),
+                                padding=ft.padding.only(left=10),
                             )
                             for general_config in self.CONFIG_DEFAULT_VALUE
                         ]
