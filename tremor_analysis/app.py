@@ -20,6 +20,7 @@ from tremor_analysis.ui.text_field_with_type import TextFieldWithType
 from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
 
 CONFIG_FILE_PATH = Path.home() / ".tremor_analysis_config.yaml"
+GENERAL_SETTINGS_KEY = "_general_"
 
 
 class MainApp:
@@ -41,13 +42,16 @@ class MainApp:
         self.yaml_file_handler = YamlFileHandler(
             CONFIG_FILE_PATH,
             {
-                "_general_": {default.name: default.value}
-                for default in self.CONFIG_DEFAULT_VALUE
+
+                GENERAL_SETTINGS_KEY: {
+                    default.name: default.value for default in self.CONFIG_DEFAULT_VALUE
+                }
             }
             | {
-                method.__class__.__name__: {entry.name: entry.value}
+                method.__class__.__name__: {
+                    entry.name: entry.value for entry in method.config
+                }
                 for method in self.analysis_methods
-                for entry in method.config
             },
         )
         self.apply_config_on_each_method()
@@ -292,6 +296,7 @@ class MainApp:
             subprocess.Popen(["xdg-open", self.target_dir.value])
         return
 
+<<<<<<< HEAD
     def on_apply_click(self, _: ft.ControlEvent) -> None:
         self.apply()
 
@@ -299,6 +304,15 @@ class MainApp:
     def apply(self) -> None:
         yaml_file_content_tmp: dict[str, Any] = {}
         yaml_file_content_tmp["_general_"] = {
+=======
+    def on_apply_setting_click(self, _: ft.ControlEvent) -> None:
+        self.apply_settings()
+
+    # apply settings
+    def apply_settings(self) -> None:
+        yaml_file_content_tmp: dict[str, Any] = {}
+        yaml_file_content_tmp[GENERAL_SETTINGS_KEY] = {
+>>>>>>> cd1b7e6a85e82866fe89c5572c54a16086c1b33f
             key: general_config.value
             for key, general_config in self.general_setting_fields.items()
         }
@@ -332,7 +346,11 @@ class MainApp:
         )
         apply_button = ft.OutlinedButton(
             text="Apply&Save Settings",
+<<<<<<< HEAD
             on_click=self.on_apply_click,
+=======
+            on_click=self.on_apply_setting_click,
+>>>>>>> cd1b7e6a85e82866fe89c5572c54a16086c1b33f
         )
         self.general_setting_fields = {
             config_key: TextFieldWithType(
@@ -342,7 +360,11 @@ class MainApp:
                 default_value=config_value,
             )
             for config_key, config_value in self.yaml_file_handler.content[
+<<<<<<< HEAD
                 "_general_"
+=======
+                GENERAL_SETTINGS_KEY
+>>>>>>> cd1b7e6a85e82866fe89c5572c54a16086c1b33f
             ].items()
         }
         settings = ft.Container(
