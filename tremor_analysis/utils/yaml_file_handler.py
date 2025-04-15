@@ -2,10 +2,7 @@ import os
 from typing import Any
 
 import yaml
-<<<<<<< HEAD
-=======
 from dictknife import deepmerge
->>>>>>> cd1b7e6a85e82866fe89c5572c54a16086c1b33f
 
 
 class YamlFileHandler:
@@ -26,11 +23,7 @@ class YamlFileHandler:
         self.content: dict[str, Any] = content  # デフォルト値
         if not os.path.isfile(self.file_path):  # yamlファイルが無かったら新規作成
             self.export_yaml()
-<<<<<<< HEAD
-        self.content = self.import_yaml()  # 過去の設定を反映
-=======
         self.import_yaml()  # 過去の設定を反映
->>>>>>> cd1b7e6a85e82866fe89c5572c54a16086c1b33f
         self.export_yaml()
 
     def import_yaml(self):
@@ -41,14 +34,8 @@ class YamlFileHandler:
         """
         with open(self.file_path, "r") as file:
             current_file_content: dict[str, Any] = yaml.safe_load(file)
-<<<<<<< HEAD
-            for key in current_file_content.keys():
-                if key in self.content:
-                    self.content[key] = current_file_content[key]
-        return self.content
-=======
+
             self.content = deepmerge(self.content, current_file_content)
->>>>>>> cd1b7e6a85e82866fe89c5572c54a16086c1b33f
 
     def export_yaml(self):
         """

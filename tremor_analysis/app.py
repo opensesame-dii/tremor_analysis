@@ -42,7 +42,6 @@ class MainApp:
         self.yaml_file_handler = YamlFileHandler(
             CONFIG_FILE_PATH,
             {
-
                 GENERAL_SETTINGS_KEY: {
                     default.name: default.value for default in self.CONFIG_DEFAULT_VALUE
                 }
@@ -70,10 +69,15 @@ class MainApp:
 
         for file_pair in file_list:
             # TODO: 正確な値に置き換え
-            row_start: int = 10
-            column_start: int = 1
-            encoding: str = "utf-8"
-            # TODO: ファイル読み込み
+            row_start: int = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
+                "Row start"
+            ]
+            column_start: int = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
+                "Column start"
+            ]
+            encoding: str = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
+                "Encoding"
+            ]
             if len(file_pair) == 1:
                 data = [
                     np.loadtxt(
@@ -81,7 +85,7 @@ class MainApp:
                         delimiter=",",
                         dtype="unicode",
                         skiprows=row_start - 1,
-                        usecols=range(column_start - 1, column_start + 9),  # TODO: ?
+                        usecols=range(column_start - 1, column_start + 2),
                         encoding=encoding,
                     )
                 ]
@@ -93,7 +97,7 @@ class MainApp:
                         delimiter=",",
                         dtype="unicode",
                         skiprows=row_start - 1,
-                        usecols=range(column_start - 1, column_start + 9),
+                        usecols=range(column_start - 1, column_start + 2),
                         encoding=encoding,
                     ),
                     np.loadtxt(
@@ -101,7 +105,7 @@ class MainApp:
                         delimiter=",",
                         dtype="unicode",
                         skiprows=row_start - 1,
-                        usecols=range(column_start - 1, column_start + 9),
+                        usecols=range(column_start - 1, column_start + 2),
                         encoding=encoding,
                     ),
                 ]
@@ -296,15 +300,6 @@ class MainApp:
             subprocess.Popen(["xdg-open", self.target_dir.value])
         return
 
-<<<<<<< HEAD
-    def on_apply_click(self, _: ft.ControlEvent) -> None:
-        self.apply()
-
-    # apply settings
-    def apply(self) -> None:
-        yaml_file_content_tmp: dict[str, Any] = {}
-        yaml_file_content_tmp["_general_"] = {
-=======
     def on_apply_setting_click(self, _: ft.ControlEvent) -> None:
         self.apply_settings()
 
@@ -312,7 +307,6 @@ class MainApp:
     def apply_settings(self) -> None:
         yaml_file_content_tmp: dict[str, Any] = {}
         yaml_file_content_tmp[GENERAL_SETTINGS_KEY] = {
->>>>>>> cd1b7e6a85e82866fe89c5572c54a16086c1b33f
             key: general_config.value
             for key, general_config in self.general_setting_fields.items()
         }
@@ -346,11 +340,7 @@ class MainApp:
         )
         apply_button = ft.OutlinedButton(
             text="Apply&Save Settings",
-<<<<<<< HEAD
-            on_click=self.on_apply_click,
-=======
             on_click=self.on_apply_setting_click,
->>>>>>> cd1b7e6a85e82866fe89c5572c54a16086c1b33f
         )
         self.general_setting_fields = {
             config_key: TextFieldWithType(
@@ -360,11 +350,7 @@ class MainApp:
                 default_value=config_value,
             )
             for config_key, config_value in self.yaml_file_handler.content[
-<<<<<<< HEAD
-                "_general_"
-=======
                 GENERAL_SETTINGS_KEY
->>>>>>> cd1b7e6a85e82866fe89c5572c54a16086c1b33f
             ].items()
         }
         settings = ft.Container(
