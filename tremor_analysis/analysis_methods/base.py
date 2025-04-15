@@ -112,8 +112,9 @@ class AnalysisMethodBase(ABC):
                             ft.Text(config_entry.name),
                             self.configure_ui_components[config_entry.name].widget,
                         ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     ),
-                    padding=ft.padding.only(left=10),
+                    padding=ft.padding.symmetric(horizontal=10),
                 ),
             ]
 

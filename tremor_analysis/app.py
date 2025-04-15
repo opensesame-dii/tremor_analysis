@@ -338,9 +338,10 @@ class MainApp:
                                         self.general_setting_fields[
                                             general_config.name
                                         ].widget,
-                                    ]
+                                    ],
+                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                                 ),
-                                padding=ft.padding.only(left=10),
+                                padding=ft.padding.symmetric(horizontal=10),
                             )
                             for general_config in self.CONFIG_DEFAULT_VALUE
                         ]
@@ -352,6 +353,7 @@ class MainApp:
                 ]
             ),
             padding=15,
+            width=450,
         )
         log_outputs = ft.Container(
             content=(
