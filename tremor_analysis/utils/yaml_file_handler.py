@@ -1,22 +1,29 @@
-from typing import Any
-import yaml
 import os
+from typing import Any
+
+import yaml
+from dictknife import deepmerge
 
 
 class YamlFileHandler:
     """
     yamlファイルの読み書きを行う
     Args:
-        file_path(str):yamlファイルのパス
-        content(dict[str, Any]): 読み込む項目と初期値　MainAppから渡される
+        file_path (str): yamlファイルのパス
+        content (dict[str, Any]): 読み込む項目と初期値。MainAppから渡される
+            {解析クラス名 (str):
+                {項目名 (str): 初期値 (int or float)}
+            }
+            のようにネストした辞書型になる
+            全体の設定項目の場合、解析クラス名は"_general_"
     """
 
     def __init__(self, file_path: str, content: dict[str, Any]):
         self.file_path = file_path
-        self.content: dict[str, Any] = content
+        self.content: dict[str, Any] = content  # デフォルト値
         if not os.path.isfile(self.file_path):  # yamlファイルが無かったら新規作成
             self.export_yaml()
-        self.content = self.import_yaml()
+        self.import_yaml()  # 過去の設定を反映
         self.export_yaml()
 
     def import_yaml(self):
@@ -27,10 +34,7 @@ class YamlFileHandler:
         """
         with open(self.file_path, "r") as file:
             current_file_content: dict[str, Any] = yaml.safe_load(file)
-            for key in current_file_content.keys():
-                if key in self.content:
-                    self.content[key] = current_file_content[key]
-        return (self.content)
+            self.content = deepmerge(self.content, current_file_content)
 
     def export_yaml(self):
         """
