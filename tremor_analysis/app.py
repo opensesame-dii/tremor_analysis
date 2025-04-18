@@ -65,17 +65,50 @@ class MainApp:
         results_1file: list[AnalysisResult] = []
         results_2files: list[AnalysisResult] = []
         file_list = self.scan()
-        data1 = np.zeros((10, 10))  # 仮
-        data2 = np.zeros((20, 20))
-        data = [data1, data2]
+        data = []
 
         for file_pair in file_list:
-            # TODO: ファイル読み込み
+            # TODO: 正確な値に置き換え
+            row_start: int = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
+                "Row start"
+            ]
+            column_start: int = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
+                "Column start"
+            ]
+            encoding: str = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
+                "Encoding"
+            ]
             if len(file_pair) == 1:
-                # TODO: dataとして読み込み data = [data1]
+                data = [
+                    np.loadtxt(
+                        file_pair[0],
+                        delimiter=",",
+                        dtype="unicode",
+                        skiprows=row_start - 1,
+                        usecols=range(column_start - 1, column_start + 2),
+                        encoding=encoding,
+                    )
+                ]
                 pass
             elif len(file_pair) == 2:
-                # TODO: dataとして読み込み data = [data1, data2]
+                data = [
+                    np.loadtxt(
+                        file_pair[0],
+                        delimiter=",",
+                        dtype="unicode",
+                        skiprows=row_start - 1,
+                        usecols=range(column_start - 1, column_start + 2),
+                        encoding=encoding,
+                    ),
+                    np.loadtxt(
+                        file_pair[1],
+                        delimiter=",",
+                        dtype="unicode",
+                        skiprows=row_start - 1,
+                        usecols=range(column_start - 1, column_start + 2),
+                        encoding=encoding,
+                    ),
+                ]
                 pass
             else:
                 raise NotImplementedError
