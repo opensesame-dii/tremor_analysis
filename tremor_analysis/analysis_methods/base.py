@@ -103,14 +103,18 @@ class AnalysisMethodBase(ABC):
             ft.Control: 設定項目のUI．
 
         """
-        column = [ft.Text(self.__class__.__name__)]
+        column = [ft.Text(self.__class__.__name__, size=15, weight=ft.FontWeight.BOLD)]
         for config_entry in self.config:
             column += [
-                ft.Row(
-                    [
-                        ft.Text(config_entry.name),
-                        self.configure_ui_components[config_entry.name].widget,
-                    ]
+                ft.Container(
+                    ft.Row(
+                        [
+                            ft.Text(config_entry.name),
+                            self.configure_ui_components[config_entry.name].widget,
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
+                    padding=ft.padding.symmetric(horizontal=10),
                 ),
             ]
 
