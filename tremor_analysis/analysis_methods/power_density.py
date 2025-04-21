@@ -7,7 +7,7 @@ import flet as ft
 import numpy as np
 
 # from analysis_methods.base import AnalysisMethodBase
-from base import AnalysisMethodBase
+from tremor_analysis.analysis_methods.base import AnalysisMethodBase
 from scipy.signal import butter, detrend, get_window, sosfilt, spectrogram
 from sklearn.decomposition import PCA
 
@@ -94,16 +94,6 @@ class PowerDensityAnalysis(AnalysisMethodBase):
             "tsi": tsi,
         }
         return result
-
-    def configure_ui(self) -> ft.Control:
-        """
-        設定項目のUIを作る．
-        補足: ft.Controlは，様々なUIの構成要素の基底クラス
-
-        Returns:
-            ft.Control: 設定項目のUI．
-        """
-        return super(PowerDensityAnalysis, self).configure_ui()
 
     # https://github.com/opensesame-dii/tremor_analysis_python/blob/master/multiple_analysis/multiple.py#L907
     def tremor_stability_index(self, data, fs) -> int:

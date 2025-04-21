@@ -6,8 +6,7 @@ from typing import Any, Optional
 import flet as ft
 import numpy as np
 from scipy.signal import detrend, spectrogram, get_window
-# from analysis_methods.base import AnalysisMethodBase
-from base import AnalysisMethodBase
+from tremor_analysis.analysis_methods.base import AnalysisMethodBase
 
 
 class SpectrogramAnalysis(AnalysisMethodBase):
@@ -28,13 +27,13 @@ class SpectrogramAnalysis(AnalysisMethodBase):
     ACCEPTABLE_DATA_COUNT: int = 1  # 実行時に受け取るべきデータの配列の数
 
     def __init__(
-            self,
-            config: Optional[dict[str, Any]] = {
-                "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
-                "nperseg": 512,
-                "min_frequency": 2,
-                "max_frequency": 20
-            }
+        self,
+        config: Optional[dict[str, Any]] = {
+            "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
+            "nperseg": 512,
+            "min_frequency": 2,
+            "max_frequency": 20,
+        },
     ):
         super(SpectrogramAnalysis, self).__init__(config)
 
@@ -72,14 +71,17 @@ class SpectrogramAnalysis(AnalysisMethodBase):
             specs.append(np.abs(spec))
 
         # convert to 3-dimensional ndarray
-        specs = np.array(specs)    # specs.shape: (3, 640, 527)
+        specs = np.array(specs)  # specs.shape: (3, 640, 527)
 
         # trim into frequency range
         f_range = (
-            np.array([self.config["min_frequency"], self.config["max_frequency"]]) * len(f) * 2 // self.config["sampling_rate"]
+            np.array([self.config["min_frequency"], self.config["max_frequency"]])
+            * len(f)
+            * 2
+            // self.config["sampling_rate"]
         )
-        specs = specs[:, f_range[0]: f_range[1], :]
-        f = f[f_range[0]: f_range[1]]
+        specs = specs[:, f_range[0] : f_range[1], :]
+        f = f[f_range[0] : f_range[1]]
 
         # add norm
         specs = np.append(specs, [np.linalg.norm(specs, axis=0)], axis=0)
@@ -92,20 +94,9 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         result: dict[str, Any] = {
             "peak_amp": peak_amp.item(),
             "peak_freq": peak_freq.item(),
-            "peak_time": peak_time.item()
+            "peak_time": peak_time.item(),
         }
         return result
-
-    def configure_ui(self) -> ft.Control:
-        """
-        設定項目のUIを作る．
-        補足: ft.Controlは，様々なUIの構成要素の基底クラス
-
-        Returns:
-            ft.Control: 設定項目のUI．
-
-        """
-        return super(SpectrogramAnalysis, self).configure_ui()
 
 
 if __name__ == "__main__":
