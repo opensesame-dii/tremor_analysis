@@ -6,8 +6,9 @@ from typing import Any, Optional
 import flet as ft
 import numpy as np
 from scipy.signal import detrend, spectrogram, get_window
-# from analysis_methods.base import AnalysisMethodBase
-from base import AnalysisMethodBase
+from tremor_analysis.analysis_methods.base import AnalysisMethodBase
+from tremor_analysis.data_models.analysis_result import AnalysisResult
+from tremor_analysis.data_models.config_parameter import ConfigParameter
 
 
 class SpectrogramAnalysis(AnalysisMethodBase):
@@ -28,17 +29,17 @@ class SpectrogramAnalysis(AnalysisMethodBase):
     ACCEPTABLE_DATA_COUNT: int = 1  # 実行時に受け取るべきデータの配列の数
 
     def __init__(
-            self,
-            config: Optional[dict[str, Any]] = {
-                "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
-                "nperseg": 512,
-                "min_frequency": 2,
-                "max_frequency": 20
-            }
+        self,
+        config: Optional[dict[str, Any]] = {
+            "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
+            "nperseg": 512,
+            "min_frequency": 2,
+            "max_frequency": 20,
+        },
     ):
         super(SpectrogramAnalysis, self).__init__(config)
 
-    def run(self, data: list[np.ndarray]) -> dict[str, Any]:
+    def run(self, data: list[np.ndarray]) -> AnalysisResult:
         """
         解析を実行する．
 
@@ -72,14 +73,17 @@ class SpectrogramAnalysis(AnalysisMethodBase):
             specs.append(np.abs(spec))
 
         # convert to 3-dimensional ndarray
-        specs = np.array(specs)    # specs.shape: (3, 640, 527)
+        specs = np.array(specs)  # specs.shape: (3, 640, 527)
 
         # trim into frequency range
         f_range = (
-            np.array([self.config["min_frequency"], self.config["max_frequency"]]) * len(f) * 2 // self.config["sampling_rate"]
+            np.array([self.config["min_frequency"], self.config["max_frequency"]])
+            * len(f)
+            * 2
+            // self.config["sampling_rate"]
         )
-        specs = specs[:, f_range[0]: f_range[1], :]
-        f = f[f_range[0]: f_range[1]]
+        specs = specs[:, f_range[0] : f_range[1], :]
+        f = f[f_range[0] : f_range[1]]
 
         # add norm
         specs = np.append(specs, [np.linalg.norm(specs, axis=0)], axis=0)
@@ -89,12 +93,17 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         peak_freq = f[peak_idx[0][0]]
         peak_time = t[peak_idx[1][0]]
 
-        result: dict[str, Any] = {
-            "peak_amp": peak_amp.item(),
-            "peak_freq": peak_freq.item(),
-            "peak_time": peak_time.item()
-        }
-        return result
+        return AnalysisResult(
+            analysis_method_class=type(self),
+            numerical_result={
+                "peak_amp": peak_amp.item(),
+                "peak_freq": peak_freq.item(),
+                "peak_time": peak_time.item(),
+            },
+            image_result={},
+            filename1=None,
+            filename2=None,
+        )
 
     def configure_ui(self) -> ft.Control:
         """

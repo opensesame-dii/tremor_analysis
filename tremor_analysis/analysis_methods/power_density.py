@@ -6,8 +6,9 @@ from typing import Any, Optional
 import flet as ft
 import numpy as np
 
-# from analysis_methods.base import AnalysisMethodBase
-from base import AnalysisMethodBase
+from tremor_analysis.analysis_methods.base import AnalysisMethodBase
+from tremor_analysis.data_models.analysis_result import AnalysisResult
+from tremor_analysis.data_models.config_parameter import ConfigParameter
 from scipy.signal import butter, detrend, get_window, sosfilt, spectrogram
 from sklearn.decomposition import PCA
 
@@ -41,7 +42,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         self.sampling_rate = 200  # TODO: これと
         self.segment_duration_sec = 5  # これは，self/configから読み出すようにしたい
 
-    def run(self, data: list[np.ndarray]) -> dict[str, Any]:
+    def run(self, data: list[np.ndarray]) -> AnalysisResult:
         """
         解析を実行する．
 
@@ -88,12 +89,17 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         peak_freq = f[peak_idx[0][0]]
         tsi = self.tremor_stability_index(data, self.config["sampling_rate"])
 
-        result = {
-            "peak_amp": peak_amp.item(),
-            "peak_freq": peak_freq.item(),
-            "tsi": tsi,
-        }
-        return result
+        return AnalysisResult(
+            analysis_method_class=type(self),
+            numerical_result={
+                "peak_amp": peak_amp.item(),
+                "peak_freq": peak_freq.item(),
+                "TSI": tsi,
+            },
+            image_result={},
+            filename1=None,
+            filename2=None,
+        )
 
     def configure_ui(self) -> ft.Control:
         """

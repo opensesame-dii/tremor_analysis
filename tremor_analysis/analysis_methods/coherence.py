@@ -6,7 +6,9 @@ from typing import Any, Optional
 import flet as ft
 import numpy as np
 from matplotlib.mlab import cohere, window_hanning
-from base import AnalysisMethodBase
+from tremor_analysis.analysis_methods.base import AnalysisMethodBase
+from tremor_analysis.data_models.analysis_result import AnalysisResult
+from tremor_analysis.data_models.config_parameter import ConfigParameter
 
 
 class CoherenceAnalysis(AnalysisMethodBase):
@@ -23,16 +25,16 @@ class CoherenceAnalysis(AnalysisMethodBase):
     ACCEPTABLE_DATA_COUNT: int = 2
 
     def __init__(
-            self,
-            config: Optional[dict[str, Any]] = {
-                "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
-                "min_frequency": 2,
-                "max_frequency": 20
-            }
+        self,
+        config: Optional[dict[str, Any]] = {
+            "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
+            "min_frequency": 2,
+            "max_frequency": 20,
+        },
     ):
         super(CoherenceAnalysis, self).__init__(config)
 
-    def run(self, data: list[np.ndarray]) -> dict[str, Any]:
+    def run(self, data: list[np.ndarray]) -> AnalysisResult:
         """
         解析を実行する
 
@@ -45,32 +47,37 @@ class CoherenceAnalysis(AnalysisMethodBase):
         # 解析処理
         x1 = data[0]
         x2 = data[1]
-        nfft = 2 ** 8
-        noverlap = 2 ** 7
+        nfft = 2**8
+        noverlap = 2**7
         Cyx, f = cohere(
             x2,
             x1,
             NFFT=nfft,
             Fs=self.config["sampling_rate"],
             window=window_hanning,
-            noverlap=noverlap
-        )   # matplotlib
+            noverlap=noverlap,
+        )  # matplotlib
         FREQ_LOW = 2
         FREQ_HIGH = 12
         xlim_l = FREQ_LOW
         xlim_r = FREQ_HIGH
         idx = [int(len(f) / f[-1] * xlim_l), int(len(f) / f[-1] * xlim_r)]
-        f = f[idx[0]: idx[1]]
+        f = f[idx[0] : idx[1]]
         df = f[1] - f[0]
-        Cyx = Cyx[idx[0]: idx[1]]
+        Cyx = Cyx[idx[0] : idx[1]]
 
         l = (len(x1) - noverlap) // (nfft - noverlap)
         z = 1 - np.power(0.05, 1 / (l - 1))
         Cyx = Cyx[Cyx >= z]
         coh = np.sum(Cyx) * df
 
-        result = {"coherence": coh}
-        return result
+        return AnalysisResult(
+            numerical_result={"coherence": coh},
+            image_result={},
+            analysis_method_calss=type(self),
+            filename1=None,
+            filename2=None,
+        )
 
     def configure_ui(self) -> ft.Control:
         """
