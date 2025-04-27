@@ -4,7 +4,7 @@ from typing import Any, Type, Union
 
 @dataclasses.dataclass
 class ConfigParameter:
-    key: str
+    key: str  # パラメーター間でUNIQUEにする
     display_name: str
     value: Any
     type: Union[Type[int], Type[float]]
@@ -21,6 +21,3 @@ class ConfigList(list[ConfigParameter]):
 
     def __getitem__(self, key: str) -> ConfigParameter:
         return self.name_to_item[key]
-
-    def __getattr__(self, name: str) -> ConfigParameter:
-        return self.name_to_item[name]

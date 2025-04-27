@@ -27,9 +27,23 @@ class AnalysisResult:
 
 @dataclasses.dataclass
 class ConfigParameter:
-    name: str
+    key: str
+    display_name: str
     value: Any
     type: Union[Type[int], Type[float]]
+
+
+class ConfigList(list[ConfigParameter]):
+    """
+    ConfigParameterのリストを作るクラス
+    """
+
+    def __init__(self, *args: list[ConfigParameter]):
+        super(ConfigList, self).__init__(*args)
+        self.name_to_item = {item.key: item for item in self}
+
+    def __getitem__(self, key: str) -> ConfigParameter:
+        return self.name_to_item[key]
 
 
 class AnalysisMethodBase(ABC):
@@ -43,32 +57,36 @@ class AnalysisMethodBase(ABC):
 
     ACCEPTABLE_DATA_COUNT: int = 1  # 実行時に受け取るべきデータの配列の数
 
-    config = [
-        ConfigParameter(
-            name="param1 (Hz)",  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
-            value=1.0,
-            type=float,
-        ),
-        ConfigParameter(
-            name="param2 (sec)",  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
-            value=2,
-            type=int,
-        ),
-    ]
+    config: ConfigList = ConfigList(
+        [
+            ConfigParameter(
+                key="param1",
+                display_name="param1 (Hz)",  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
+                value=1.0,
+                type=float,
+            ),
+            ConfigParameter(
+                key="param2",
+                display_name="param2 (sec)",  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
+                value=2,
+                type=int,
+            ),
+        ]
+    )
 
     @abstractmethod
     def __init__(
         self,
-        config: Optional[list[ConfigParameter]] = None,
+        config: ConfigList = None,
     ):
         if config is not None:
-            name_to_item = {item.name: item for item in self.config}
+            name_to_item = {item.key: item for item in self.config}
             for item in config:
-                name_to_item[item.name] = item
+                name_to_item[item.key] = item
             self.config = list(name_to_item.values())
         self.configure_ui_components: dict[str, Any] = {}
         for config_entry in self.config:
-            self.configure_ui_components[config_entry.name] = TextFieldWithType(
+            self.configure_ui_components[config_entry.key] = TextFieldWithType(
                 dtype=config_entry.type,
                 default_value=config_entry.value,
             )
@@ -109,8 +127,8 @@ class AnalysisMethodBase(ABC):
                 ft.Container(
                     ft.Row(
                         [
-                            ft.Text(config_entry.name),
-                            self.configure_ui_components[config_entry.name].widget,
+                            ft.Text(config_entry.key),
+                            self.configure_ui_components[config_entry.key].widget,
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     ),
@@ -129,7 +147,7 @@ class AnalysisMethodBase(ABC):
         """
         for key, value in new_config.items():
             for config_entry in self.config:
-                if config_entry.name == key:
+                if config_entry.key == key:
                     config_entry.value = value
                     self.configure_ui_components[key].widget.value = str(value)
                     break

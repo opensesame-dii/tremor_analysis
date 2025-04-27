@@ -4,19 +4,28 @@ from PIL import Image
 
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase
 from tremor_analysis.data_models.analysis_result import AnalysisResult
-from tremor_analysis.data_models.config_parameter import ConfigParameter
+from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
 
 
 class DummyAnalysis(AnalysisMethodBase):
     ACCEPTABLE_DATA_COUNT = 1
-    config = [
-        ConfigParameter(name="sampling_rate (Hz, float)", value=200, type=float),
-        ConfigParameter(name="nperseg (n, int)", value=512, type=int),
-    ]
+    config: ConfigList = ConfigList(
+        [
+            ConfigParameter(
+                key="dummyparam1",
+                display_name="sampling rate (Hz, float)",
+                value=200,
+                type=float,
+            ),
+            ConfigParameter(
+                key="dummyparam2", display_name="nperseg (n, int)", value=512, type=int
+            ),
+        ]
+    )
 
     def __init__(
         self,
-        config: Optional[list[ConfigParameter]] = None,
+        config: ConfigList = None,
     ):
         super(DummyAnalysis, self).__init__(config)
 
@@ -32,14 +41,26 @@ class DummyAnalysis(AnalysisMethodBase):
 
 class DummyAnalysisCapableTwoData(AnalysisMethodBase):
     ACCEPTABLE_DATA_COUNT = 2
-    config = [
-        ConfigParameter(name="min_frequency (Hz, int)", value=2, type=int),
-        ConfigParameter(name="max_frequency (Hz, int)", value=20, type=int),
-    ]
+    config = ConfigList(
+        [
+            ConfigParameter(
+                key="min_frequency",
+                display_name="min_frequency (Hz, int)",
+                value=2,
+                type=int,
+            ),
+            ConfigParameter(
+                key="max_frequency",
+                display_name="max_frequency (Hz, int)",
+                value=20,
+                type=int,
+            ),
+        ]
+    )
 
     def __init__(
         self,
-        config: Optional[list[ConfigParameter]] = None,
+        config: ConfigList = None,
     ):
         super(DummyAnalysisCapableTwoData, self).__init__(config)
 
