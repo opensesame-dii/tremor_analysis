@@ -375,7 +375,7 @@ class MainApp:
                             ft.Container(
                                 ft.Row(
                                     [
-                                        ft.Text(general_config.key),
+                                        ft.Text(general_config.display_name),
                                         self.general_setting_fields[
                                             general_config.key
                                         ].widget,
