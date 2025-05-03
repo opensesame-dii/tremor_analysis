@@ -23,31 +23,32 @@ class CoherenceAnalysis(AnalysisMethodBase):
     """
 
     ACCEPTABLE_DATA_COUNT: int = 2
+    config: ConfigList = ConfigList(
+        [
+            ConfigParameter(
+                key="sampling_rate",
+                display_name="sampling rate",
+                value=200,
+                type=int,
+            ),
+            ConfigParameter(
+                key="min_frequency",
+                display_name="min frequency",
+                value=2,
+                type=int,
+            ),
+            ConfigParameter(
+                key="max_frequency",
+                display_name="max_frequency",
+                value=20,
+                type=int,
+            ),
+        ]
+    )
 
     def __init__(
         self,
-        config: ConfigList = ConfigList(
-            [
-                ConfigParameter(
-                    key="sampling_rate",
-                    display_name="sampling rate",
-                    value=200,
-                    type=int,
-                ),
-                ConfigParameter(
-                    key="min_frequency",
-                    display_name="min frequency",
-                    value=2,
-                    type=int,
-                ),
-                ConfigParameter(
-                    key="max_frequency",
-                    display_name="max_frequency",
-                    value=20,
-                    type=int,
-                ),
-            ]
-        ),
+        config: ConfigList = None,
     ):
         super(CoherenceAnalysis, self).__init__(config)
 

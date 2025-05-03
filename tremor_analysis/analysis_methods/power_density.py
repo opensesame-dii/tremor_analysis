@@ -25,43 +25,44 @@ class PowerDensityAnalysis(AnalysisMethodBase):
     """
 
     ACCEPTABLE_DATA_COUNT: int = 1  # 実行時に受け取るべきデータの配列の数
+    config: ConfigList = ConfigList(
+        [
+            ConfigParameter(
+                key="sampling_rate",
+                display_name="sampling rate",
+                value=200,
+                type=int,
+            ),
+            ConfigParameter(
+                key="nperseg",
+                display_name="sample num per stft segment",
+                value=512,
+                type=int,
+            ),
+            ConfigParameter(
+                key="min_frequency",
+                display_name="min frequency",
+                value=2,
+                type=int,
+            ),
+            ConfigParameter(
+                key="max_frequency",
+                display_name="max_frequency",
+                value=20,
+                type=int,
+            ),
+            ConfigParameter(
+                key="segment_duration_sec",
+                display_name="segment duration sec",
+                value=5,
+                type=int,
+            ),
+        ]
+    )
 
     def __init__(
         self,
-        config: ConfigList = ConfigList(
-            [
-                ConfigParameter(
-                    key="sampling_rate",
-                    display_name="sampling rate",
-                    value=200,
-                    type=int,
-                ),
-                ConfigParameter(
-                    key="nperseg",
-                    display_name="sample num per stft segment",
-                    value=512,
-                    type=int,
-                ),
-                ConfigParameter(
-                    key="min_frequency",
-                    display_name="min frequency",
-                    value=2,
-                    type=int,
-                ),
-                ConfigParameter(
-                    key="max_frequency",
-                    display_name="max_frequency",
-                    value=20,
-                    type=int,
-                ),
-                ConfigParameter(
-                    key="segment_duration_sec",
-                    display_name="segment duration sec",
-                    value=5,
-                    type=int,
-                ),
-            ]
-        ),
+        config: ConfigList = None,
     ):
         super(PowerDensityAnalysis, self).__init__(config)
 
