@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image
 
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
+from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
 
 
 @dataclasses.dataclass
@@ -23,27 +24,6 @@ class AnalysisResult:
     analysis_method_class: Type[AnalysisMethodBase]
     filename1: Optional[str]
     filename2: Optional[str]
-
-
-@dataclasses.dataclass
-class ConfigParameter:
-    key: str
-    display_name: str
-    value: Any
-    type: Union[Type[int], Type[float]]
-
-
-class ConfigList(list[ConfigParameter]):
-    """
-    ConfigParameterのリストを作るクラス
-    """
-
-    def __init__(self, *args: list[ConfigParameter]):
-        super(ConfigList, self).__init__(*args)
-        self.name_to_item = {item.key: item for item in self}
-
-    def __getitem__(self, key: str) -> ConfigParameter:
-        return self.name_to_item[key]
 
 
 class AnalysisMethodBase(ABC):

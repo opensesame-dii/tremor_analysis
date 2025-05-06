@@ -7,7 +7,7 @@ class ConfigParameter:
     key: str  # パラメーター間でUNIQUEにする
     display_name: str
     value: Any
-    type: Union[Type[int], Type[float]]
+    type: Union[Type[int], Type[float], Type[str]]
 
 
 class ConfigList(list[ConfigParameter]):
