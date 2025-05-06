@@ -34,6 +34,7 @@ class YamlFileHandler:
         """
         with open(self.file_path, "r") as file:
             current_file_content: dict[str, Any] = yaml.safe_load(file)
+
             self.content = deepmerge(self.content, current_file_content)
 
     def export_yaml(self):

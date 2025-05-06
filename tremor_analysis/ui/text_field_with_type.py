@@ -16,15 +16,18 @@ class TextFieldWithType:
             self.widget = ft.TextField(
                 input_filter=InputFilters.int,
                 value=default_value,
+                width=120,
             )
         elif self.dtype == float:
             self.widget = ft.TextField(
                 input_filter=InputFilters.float,
                 value=default_value,
+                width=120,
             )
         elif self.dtype == str:
             self.widget = ft.TextField(
                 value=default_value,
+                width=120,
             )
         else:
             raise NotImplementedError("CustomTextField.dtype must be int, float or str")

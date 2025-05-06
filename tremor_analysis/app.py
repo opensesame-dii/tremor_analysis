@@ -15,7 +15,7 @@ from tremor_analysis.analysis_methods.dummy import (
     DummyAnalysis,
     DummyAnalysisCapableTwoData,
 )
-from tremor_analysis.data_models.config_parameter import ConfigParameter
+from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
 from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
 
@@ -24,11 +24,19 @@ GENERAL_SETTINGS_KEY = "_general_"
 
 
 class MainApp:
-    CONFIG_DEFAULT_VALUE: list[ConfigParameter] = [
-        ConfigParameter(name="Row start", value=1, type=int),
-        ConfigParameter(name="Column start", value=1, type=int),
-        ConfigParameter(name="Encoding", value="utf-8", type=str),
-    ]
+    CONFIG_DEFAULT_VALUE: ConfigList = ConfigList(
+        [
+            ConfigParameter(
+                key="row_start", display_name="Row start", value=1, type=int
+            ),
+            ConfigParameter(
+                key="column_start", display_name="Column start", value=1, type=int
+            ),
+            ConfigParameter(
+                key="encoding", display_name="Encoding", value="utf-8", type=str
+            ),
+        ]
+    )
     OUTPUT_FILE_EXTENSION = ".tremor.csv"
     ACCEPTABLE_FILE_EXTENSION = ".csv"
 
@@ -43,12 +51,12 @@ class MainApp:
             CONFIG_FILE_PATH,
             {
                 GENERAL_SETTINGS_KEY: {
-                    default.name: default.value for default in self.CONFIG_DEFAULT_VALUE
+                    default.key: default.value for default in self.CONFIG_DEFAULT_VALUE
                 }
             }
             | {
                 method.__class__.__name__: {
-                    entry.name: entry.value for entry in method.config
+                    entry.key: entry.value for entry in method.config
                 }
                 for method in self.analysis_methods
             },
@@ -65,17 +73,50 @@ class MainApp:
         results_1file: list[AnalysisResult] = []
         results_2files: list[AnalysisResult] = []
         file_list = self.scan()
-        data1 = np.zeros((10, 10))  # 仮
-        data2 = np.zeros((20, 20))
-        data = [data1, data2]
+        data = []
 
         for file_pair in file_list:
-            # TODO: ファイル読み込み
+            # TODO: 正確な値に置き換え
+            row_start: int = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
+                "row_start"
+            ]
+            column_start: int = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
+                "column_start"
+            ]
+            encoding: str = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
+                "encoding"
+            ]
             if len(file_pair) == 1:
-                # TODO: dataとして読み込み data = [data1]
+                data = [
+                    np.loadtxt(
+                        file_pair[0],
+                        delimiter=",",
+                        dtype="unicode",
+                        skiprows=row_start - 1,
+                        usecols=range(column_start - 1, column_start + 2),
+                        encoding=encoding,
+                    )
+                ]
                 pass
             elif len(file_pair) == 2:
-                # TODO: dataとして読み込み data = [data1, data2]
+                data = [
+                    np.loadtxt(
+                        file_pair[0],
+                        delimiter=",",
+                        dtype="unicode",
+                        skiprows=row_start - 1,
+                        usecols=range(column_start - 1, column_start + 2),
+                        encoding=encoding,
+                    ),
+                    np.loadtxt(
+                        file_pair[1],
+                        delimiter=",",
+                        dtype="unicode",
+                        skiprows=row_start - 1,
+                        usecols=range(column_start - 1, column_start + 2),
+                        encoding=encoding,
+                    ),
+                ]
                 pass
             else:
                 raise NotImplementedError
@@ -284,7 +325,7 @@ class MainApp:
             ):
                 config.value = config_component.value
                 yaml_file_content_tmp[method.__class__.__name__][
-                    config.name
+                    config.key
                 ] = config_component.value
         if yaml_file_content_tmp != self.yaml_file_handler.content:
             self.yaml_file_handler.content = yaml_file_content_tmp
@@ -312,7 +353,7 @@ class MainApp:
         self.general_setting_fields = {
             config_key: TextFieldWithType(
                 dtype=list(
-                    filter(lambda x: x.name == config_key, self.CONFIG_DEFAULT_VALUE)
+                    filter(lambda x: x.key == config_key, self.CONFIG_DEFAULT_VALUE)
                 )[0].type,
                 default_value=config_value,
             )
@@ -320,28 +361,40 @@ class MainApp:
                 GENERAL_SETTINGS_KEY
             ].items()
         }
+
         settings = ft.Container(
             content=ft.Column(
                 [
-                    ft.Text("General Settings"),
-                ]
-                + [
-                    ft.Row(
+                    ft.Column(
                         [
-                            ft.Text(general_config.name),
-                            self.general_setting_fields[general_config.name].widget,
+                            ft.Text(
+                                "General Settings", size=15, weight=ft.FontWeight.BOLD
+                            ),
                         ]
-                    )
-                    for general_config in self.CONFIG_DEFAULT_VALUE
-                ]
-                + [method.configure_ui() for method in self.analysis_methods]
-                + [
+                        + [
+                            ft.Container(
+                                ft.Row(
+                                    [
+                                        ft.Text(general_config.display_name),
+                                        self.general_setting_fields[
+                                            general_config.key
+                                        ].widget,
+                                    ],
+                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                ),
+                                padding=ft.padding.symmetric(horizontal=10),
+                            )
+                            for general_config in self.CONFIG_DEFAULT_VALUE
+                        ]
+                        + [method.configure_ui() for method in self.analysis_methods],
+                        scroll=ft.ScrollMode.ALWAYS,
+                        height=self.page.window_height * 0.6,
+                    ),
                     apply_button,
-                ],
-                scroll=ft.ScrollMode.ALWAYS,
+                ]
             ),
-            padding=25,
-            height=self.page.window_height * 0.7,
+            padding=15,
+            width=450,
         )
         log_outputs = ft.Container(
             content=(
@@ -396,6 +449,8 @@ class MainApp:
 
         # page setting
         self.page.title = "tremor_analysis"
+        self.page.window_height = 750
+        self.page.window_width = 1000
 
         self.build_ui()
         self.page.update()
