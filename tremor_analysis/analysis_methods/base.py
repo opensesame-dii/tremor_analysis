@@ -107,6 +107,7 @@ class AnalysisMethodBase(ABC):
                 ft.Container(
                     ft.Row(
                         [
+
                             ft.Text(config_entry.display_name),
                             self.configure_ui_components[config_entry.key].widget,
                         ],

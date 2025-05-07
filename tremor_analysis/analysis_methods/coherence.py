@@ -92,16 +92,6 @@ class CoherenceAnalysis(AnalysisMethodBase):
         result = {"coherence": coh}
         return result
 
-    def configure_ui(self) -> ft.Control:
-        """
-        設定項目のUIを作る．
-        補足: ft.Controlは，様々なUIの構成要素の基底クラス
-
-        Returns:
-            ft.Control: 設定項目のUI．
-        """
-        return super(CoherenceAnalysis, self).configure_ui()
-
 
 if __name__ == "__main__":
     analysis = CoherenceAnalysis()

@@ -7,6 +7,7 @@ import flet as ft
 import numpy as np
 from scipy.signal import detrend, spectrogram, get_window
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase
+
 from tremor_analysis.data_models.analysis_result import AnalysisResult
 from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
 
@@ -124,17 +125,6 @@ class SpectrogramAnalysis(AnalysisMethodBase):
             "peak_time": peak_time.item(),
         }
         return result
-
-    def configure_ui(self) -> ft.Control:
-        """
-        設定項目のUIを作る．
-        補足: ft.Controlは，様々なUIの構成要素の基底クラス
-
-        Returns:
-            ft.Control: 設定項目のUI．
-
-        """
-        return super(SpectrogramAnalysis, self).configure_ui()
 
 
 if __name__ == "__main__":
