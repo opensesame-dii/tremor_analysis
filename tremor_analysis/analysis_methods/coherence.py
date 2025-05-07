@@ -7,6 +7,8 @@ import flet as ft
 import numpy as np
 from matplotlib.mlab import cohere, window_hanning
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase
+from tremor_analysis.data_models.analysis_result import AnalysisResult
+from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
 
 
 class CoherenceAnalysis(AnalysisMethodBase):
@@ -21,14 +23,32 @@ class CoherenceAnalysis(AnalysisMethodBase):
     """
 
     ACCEPTABLE_DATA_COUNT: int = 2
+    config: ConfigList = ConfigList(
+        [
+            ConfigParameter(
+                key="sampling_rate",
+                display_name="sampling rate",
+                value=200,
+                type=int,
+            ),
+            ConfigParameter(
+                key="min_frequency",
+                display_name="min frequency",
+                value=2,
+                type=int,
+            ),
+            ConfigParameter(
+                key="max_frequency",
+                display_name="max_frequency",
+                value=20,
+                type=int,
+            ),
+        ]
+    )
 
     def __init__(
         self,
-        config: Optional[dict[str, Any]] = {
-            "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
-            "min_frequency": 2,
-            "max_frequency": 20,
-        },
+        config: ConfigList = None,
     ):
         super(CoherenceAnalysis, self).__init__(config)
 
@@ -51,7 +71,7 @@ class CoherenceAnalysis(AnalysisMethodBase):
             x2,
             x1,
             NFFT=nfft,
-            Fs=self.config["sampling_rate"],
+            Fs=self.config["sampling_rate"].value,
             window=window_hanning,
             noverlap=noverlap,
         )  # matplotlib

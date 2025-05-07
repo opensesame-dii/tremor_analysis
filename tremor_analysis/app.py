@@ -15,7 +15,7 @@ from tremor_analysis.analysis_methods.dummy import (
     DummyAnalysis,
     DummyAnalysisCapableTwoData,
 )
-from tremor_analysis.data_models.config_parameter import ConfigParameter
+from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
 from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
 
@@ -24,11 +24,19 @@ GENERAL_SETTINGS_KEY = "_general_"
 
 
 class MainApp:
-    CONFIG_DEFAULT_VALUE: list[ConfigParameter] = [
-        ConfigParameter(name="Row start", value=1, type=int),
-        ConfigParameter(name="Column start", value=1, type=int),
-        ConfigParameter(name="Encoding", value="utf-8", type=str),
-    ]
+    CONFIG_DEFAULT_VALUE: ConfigList = ConfigList(
+        [
+            ConfigParameter(
+                key="row_start", display_name="Row start", value=1, type=int
+            ),
+            ConfigParameter(
+                key="column_start", display_name="Column start", value=1, type=int
+            ),
+            ConfigParameter(
+                key="encoding", display_name="Encoding", value="utf-8", type=str
+            ),
+        ]
+    )
     OUTPUT_FILE_EXTENSION = ".tremor.csv"
     ACCEPTABLE_FILE_EXTENSION = ".csv"
 
@@ -43,12 +51,12 @@ class MainApp:
             CONFIG_FILE_PATH,
             {
                 GENERAL_SETTINGS_KEY: {
-                    default.name: default.value for default in self.CONFIG_DEFAULT_VALUE
+                    default.key: default.value for default in self.CONFIG_DEFAULT_VALUE
                 }
             }
             | {
                 method.__class__.__name__: {
-                    entry.name: entry.value for entry in method.config
+                    entry.key: entry.value for entry in method.config
                 }
                 for method in self.analysis_methods
             },
@@ -70,13 +78,13 @@ class MainApp:
         for file_pair in file_list:
             # TODO: 正確な値に置き換え
             row_start: int = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
-                "Row start"
+                "row_start"
             ]
             column_start: int = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
-                "Column start"
+                "column_start"
             ]
             encoding: str = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
-                "Encoding"
+                "encoding"
             ]
             if len(file_pair) == 1:
                 data = [
@@ -317,7 +325,7 @@ class MainApp:
             ):
                 config.value = config_component.value
                 yaml_file_content_tmp[method.__class__.__name__][
-                    config.name
+                    config.key
                 ] = config_component.value
         if yaml_file_content_tmp != self.yaml_file_handler.content:
             self.yaml_file_handler.content = yaml_file_content_tmp
@@ -345,7 +353,7 @@ class MainApp:
         self.general_setting_fields = {
             config_key: TextFieldWithType(
                 dtype=list(
-                    filter(lambda x: x.name == config_key, self.CONFIG_DEFAULT_VALUE)
+                    filter(lambda x: x.key == config_key, self.CONFIG_DEFAULT_VALUE)
                 )[0].type,
                 default_value=config_value,
             )
@@ -367,9 +375,9 @@ class MainApp:
                             ft.Container(
                                 ft.Row(
                                     [
-                                        ft.Text(general_config.name),
+                                        ft.Text(general_config.display_name),
                                         self.general_setting_fields[
-                                            general_config.name
+                                            general_config.key
                                         ].widget,
                                     ],
                                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
