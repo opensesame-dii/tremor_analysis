@@ -8,7 +8,7 @@ import numpy as np
 from scipy.signal import detrend, spectrogram, get_window
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase
 from tremor_analysis.data_models.analysis_result import AnalysisResult
-from tremor_analysis.data_models.config_parameter import ConfigParameter
+from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
 
 
 class SpectrogramAnalysis(AnalysisMethodBase):
@@ -27,15 +27,38 @@ class SpectrogramAnalysis(AnalysisMethodBase):
     """
 
     ACCEPTABLE_DATA_COUNT: int = 1  # 実行時に受け取るべきデータの配列の数
+    config: ConfigList = ConfigList(
+        [
+            ConfigParameter(
+                key="sampling_rate",
+                display_name="sampling rate",
+                value=200,
+                type=int,
+            ),
+            ConfigParameter(
+                key="nperseg",
+                display_name="sample num per segment",
+                value=512,
+                type=int,
+            ),
+            ConfigParameter(
+                key="min_frequency",
+                display_name="min frequency",
+                value=2,
+                type=int,
+            ),
+            ConfigParameter(
+                key="max_frequency",
+                display_name="max_frequency",
+                value=20,
+                type=int,
+            ),
+        ]
+    )
 
     def __init__(
         self,
-        config: Optional[dict[str, Any]] = {
-            "sampling_rate": 200,  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
-            "nperseg": 512,
-            "min_frequency": 2,
-            "max_frequency": 20,
-        },
+        config: ConfigList = None,
     ):
         super(SpectrogramAnalysis, self).__init__(config)
 
@@ -55,7 +78,7 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         specs = []
         x_length = len(data[0])
         nTimesSpectrogram = 500
-        L = np.min((x_length, self.config["nperseg"]))
+        L = np.min((x_length, self.config["nperseg"].value))
         noverlap = np.ceil(L - (x_length - L) / (nTimesSpectrogram - 1))
         noverlap = int(np.max((1, noverlap)))
 
@@ -63,9 +86,9 @@ class SpectrogramAnalysis(AnalysisMethodBase):
             # scipy
             f, t, spec = spectrogram(
                 detrend(data[i]),
-                self.config["sampling_rate"],
-                window=get_window("hamming", int(self.config["nperseg"])),
-                nperseg=int(self.config["nperseg"]),
+                self.config["sampling_rate"].value,
+                window=get_window("hamming", int(self.config["nperseg"].value)),
+                nperseg=int(self.config["nperseg"].value),
                 noverlap=noverlap,
                 nfft=2**12,
                 mode="magnitude",
@@ -77,10 +100,12 @@ class SpectrogramAnalysis(AnalysisMethodBase):
 
         # trim into frequency range
         f_range = (
-            np.array([self.config["min_frequency"], self.config["max_frequency"]])
+            np.array(
+                [self.config["min_frequency"].value, self.config["max_frequency"].value]
+            )
             * len(f)
             * 2
-            // self.config["sampling_rate"]
+            // self.config["sampling_rate"].value
         )
         specs = specs[:, f_range[0] : f_range[1], :]
         f = f[f_range[0] : f_range[1]]
@@ -93,17 +118,12 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         peak_freq = f[peak_idx[0][0]]
         peak_time = t[peak_idx[1][0]]
 
-        return AnalysisResult(
-            analysis_method_class=type(self),
-            numerical_result={
-                "peak_amp": peak_amp.item(),
-                "peak_freq": peak_freq.item(),
-                "peak_time": peak_time.item(),
-            },
-            image_result={},
-            filename1=None,
-            filename2=None,
-        )
+        result: dict[str, Any] = {
+            "peak_amp": peak_amp.item(),
+            "peak_freq": peak_freq.item(),
+            "peak_time": peak_time.item(),
+        }
+        return result
 
     def configure_ui(self) -> ft.Control:
         """
