@@ -15,6 +15,9 @@ from tremor_analysis.analysis_methods.dummy import (
     DummyAnalysis,
     DummyAnalysisCapableTwoData,
 )
+from tremor_analysis.analysis_methods.spectrogram import SpectrogramAnalysis
+from tremor_analysis.analysis_methods.coherence import CoherenceAnalysis
+from tremor_analysis.analysis_methods.power_density import PowerDensityAnalysis
 from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
 from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
@@ -42,9 +45,11 @@ class MainApp:
 
     def __init__(self) -> None:
         self.analysis_methods: list[AnalysisMethodBase] = [
-            # SpectrogramAnalysis(),
             DummyAnalysis(),  # ここで解析手法のクラスをインスタンス化
             DummyAnalysisCapableTwoData(),
+            CoherenceAnalysis(),
+            PowerDensityAnalysis(),
+            # SpectrogramAnalysis(),
             # 他の解析手法もここに追加
         ]
         self.yaml_file_handler = YamlFileHandler(

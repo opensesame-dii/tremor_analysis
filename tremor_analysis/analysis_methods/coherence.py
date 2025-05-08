@@ -92,7 +92,7 @@ class CoherenceAnalysis(AnalysisMethodBase):
         return AnalysisResult(
             numerical_result={"coherence": coh},
             image_result={},
-            analysis_method_calss=type(self),
+            analysis_method_class=type(self),
             filename1=None,
             filename2=None,
         )

@@ -7,7 +7,6 @@ import flet as ft
 import numpy as np
 from scipy.signal import detrend, spectrogram, get_window
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase
-
 from tremor_analysis.data_models.analysis_result import AnalysisResult
 from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
 
@@ -50,7 +49,7 @@ class SpectrogramAnalysis(AnalysisMethodBase):
             ),
             ConfigParameter(
                 key="max_frequency",
-                display_name="max_frequency",
+                display_name="max frequency",
                 value=20,
                 type=int,
             ),
@@ -119,12 +118,17 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         peak_freq = f[peak_idx[0][0]]
         peak_time = t[peak_idx[1][0]]
 
-        result: dict[str, Any] = {
-            "peak_amp": peak_amp.item(),
-            "peak_freq": peak_freq.item(),
-            "peak_time": peak_time.item(),
-        }
-        return result
+        return AnalysisResult(
+            analysis_method_class=type(self),
+            numerical_result={
+                "peak_amp": peak_amp.item(),
+                "peak_freq": peak_freq.item(),
+                "peak_time": peak_time.item(),
+            },
+            image_result={},
+            filename1=None,
+            filename2=None,
+        )
 
 
 if __name__ == "__main__":

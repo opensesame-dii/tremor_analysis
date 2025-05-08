@@ -5,11 +5,9 @@ from typing import Any, Optional
 
 import flet as ft
 import numpy as np
-
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase
 from tremor_analysis.data_models.analysis_result import AnalysisResult
 from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
-
 from scipy.signal import butter, detrend, get_window, sosfilt, spectrogram
 from sklearn.decomposition import PCA
 
@@ -68,7 +66,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
     ):
         super(PowerDensityAnalysis, self).__init__(config)
 
-    def run(self, data: list[np.ndarray]) -> dict[str, Any]:
+    def run(self, data: list[np.ndarray]) -> AnalysisResult:
         """
         解析を実行する．
 
