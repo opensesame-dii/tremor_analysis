@@ -125,31 +125,23 @@ class MainApp:
                 pass
             else:
                 raise NotImplementedError
-        if self.target_dir:
-            self.output_file = os.path.join(self.target_dir.value, "result.tremor.csv")
-            with open(self.output_file, "w") as file:
-                writer = csv.writer(file)
-                for key, value in result.numerical_result.items():
-                    writer.writerows([[key, value]])
-            self.output_image_file = os.path.join(self.target_dir.value, "image.png")
-            for key, image in result.image_result.items():
-                image.save(self.output_image_file)
-            for method in self.analysis_methods:
-                if method.ACCEPTABLE_DATA_COUNT == 1:
-                    for i, file in enumerate(file_pair):
+            if self.target_dir:
+                for method in self.analysis_methods:
+                    if method.ACCEPTABLE_DATA_COUNT == 1:
+                        for i, file in enumerate(file_pair):
+                            result = method.run(data)
+                            result.filename1 = file_pair[0]
+                            results_1file.append(result)
+                    elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 2:
+                        # 左右の手のデータペアを受け入れる解析
                         result = method.run(data)
                         result.filename1 = file_pair[0]
-                        results_1file.append(result)
-                elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 2:
-                    # 左右の手のデータペアを受け入れる解析
-                    result = method.run(data)
-                    result.filename1 = file_pair[0]
-                    result.filename2 = file_pair[1]
-                    results_2files.append(result)
-                elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 1:
-                    pass
-                else:
-                    raise NotImplementedError
+                        result.filename2 = file_pair[1]
+                        results_2files.append(result)
+                    elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 1:
+                        pass
+                    else:
+                        raise NotImplementedError
         self.append_result_file(
             results_1file=results_1file,
             results_2files=results_2files,
