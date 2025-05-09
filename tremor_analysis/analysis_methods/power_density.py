@@ -5,11 +5,9 @@ from typing import Any, Optional
 
 import flet as ft
 import numpy as np
-
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase
 from tremor_analysis.data_models.analysis_result import AnalysisResult
 from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
-
 from scipy.signal import butter, detrend, get_window, sosfilt, spectrogram
 from sklearn.decomposition import PCA
 
@@ -68,7 +66,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
     ):
         super(PowerDensityAnalysis, self).__init__(config)
 
-    def run(self, data: list[np.ndarray]) -> dict[str, Any]:
+    def run(self, data: list[np.ndarray]) -> AnalysisResult:
         """
         解析を実行する．
 
@@ -117,12 +115,17 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         peak_freq = f[peak_idx[0][0]]
         tsi = self.tremor_stability_index(data, self.config["sampling_rate"].value)
 
-        result = {
-            "peak_amp": peak_amp.item(),
-            "peak_freq": peak_freq.item(),
-            "tsi": tsi,
-        }
-        return result
+        return AnalysisResult(
+            analysis_method_class=type(self),
+            numerical_result={
+                "peak_amp": peak_amp.item(),
+                "peak_freq": peak_freq.item(),
+                "TSI": tsi,
+            },
+            image_result={},
+            filename1=None,
+            filename2=None,
+        )
 
     # https://github.com/opensesame-dii/tremor_analysis_python/blob/master/multiple_analysis/multiple.py#L907
     def tremor_stability_index(self, data, fs) -> int:

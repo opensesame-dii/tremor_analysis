@@ -15,7 +15,10 @@ from tremor_analysis.analysis_methods.dummy import (
     DummyAnalysis,
     DummyAnalysisCapableTwoData,
 )
-from tremor_analysis.data_models.config_parameter import ConfigList, ConfigParameter
+from tremor_analysis.analysis_methods.spectrogram import SpectrogramAnalysis
+from tremor_analysis.analysis_methods.coherence import CoherenceAnalysis
+from tremor_analysis.analysis_methods.power_density import PowerDensityAnalysis
+from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
 from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
 
@@ -42,9 +45,11 @@ class MainApp:
 
     def __init__(self) -> None:
         self.analysis_methods: list[AnalysisMethodBase] = [
-            # SpectrogramAnalysis(),
             DummyAnalysis(),  # ここで解析手法のクラスをインスタンス化
             DummyAnalysisCapableTwoData(),
+            CoherenceAnalysis(),
+            PowerDensityAnalysis(),
+            SpectrogramAnalysis(),
             # 他の解析手法もここに追加
         ]
         self.yaml_file_handler = YamlFileHandler(
@@ -447,39 +452,6 @@ class MainApp:
         self.build_ui()
         self.page.update()
         page.update()
-
-
-class SpectrogramAnalysis:
-    def __init__(self):
-        self.data = 3
-
-    def run(
-        self,
-    ) -> dict[str, Any]:
-        self.val = 1 + self.data
-        self.answer = {"answer": self.val}
-
-    def import_config(self):
-        with open(CONFIG_FILE_PATH) as file:
-            self.config = yaml.safe_load(file)
-        self.max = self.config["SpectrogramAnalysis"]["max"]
-        self.min = self.config["SpectrogramAnalysis"]["min"]
-
-    def export_config(self):
-        return self.config["SpectrogramAnalysis"]
-
-    def build_result_ui(self):
-        self.text_area = ft.Text("設定項目")
-        self.val_area = ft.TextField(hint_text="int")
-        x = ft.Container(ft.Row(self.text_area, self.val_area))
-        return x
-
-        # Main_appでのrunでこれも呼ぶ？？
-
-    def update_ui(self):
-        # 横並びで一塊にして配置したい　https://qiita.com/donraq/items/1ac45ddfe0a803a94e27
-        # ここでつくる=>Main_appにUI関係のmake_picみたいなやつを作って並べる
-        print("test")
 
 
 def main():

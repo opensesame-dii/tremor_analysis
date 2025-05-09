@@ -52,7 +52,7 @@ class CoherenceAnalysis(AnalysisMethodBase):
     ):
         super(CoherenceAnalysis, self).__init__(config)
 
-    def run(self, data: list[np.ndarray]) -> dict[str, Any]:
+    def run(self, data: list[np.ndarray]) -> AnalysisResult:
         """
         解析を実行する
 
@@ -89,8 +89,13 @@ class CoherenceAnalysis(AnalysisMethodBase):
         Cyx = Cyx[Cyx >= z]
         coh = np.sum(Cyx) * df
 
-        result = {"coherence": coh}
-        return result
+        return AnalysisResult(
+            numerical_result={"coherence": coh},
+            image_result={},
+            analysis_method_class=type(self),
+            filename1=None,
+            filename2=None,
+        )
 
 
 if __name__ == "__main__":
