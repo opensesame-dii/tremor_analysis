@@ -63,8 +63,8 @@ class CoherenceAnalysis(AnalysisMethodBase):
             dict[str, Any]: 解析結果．項目名と値のdict
         """
         # 解析処理
-        x1 = data[0]
-        x2 = data[1]
+        x1 = data[0].astype(float)
+        x2 = data[1].astype(float)
         nfft = 2**8
         noverlap = 2**7
         Cyx, f = cohere(
