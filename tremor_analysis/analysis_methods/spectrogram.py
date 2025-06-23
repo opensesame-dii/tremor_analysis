@@ -1,15 +1,19 @@
 # https://github.com/opensesame-dii/tremor_analysis_python/blob/master/multiple_analysis/multiple.py#L619
 # spectrogram_analize関数に対応
 
+import io
 from typing import Any, Optional
 
 import flet as ft
+import matplotlib.pyplot as plt
 import numpy as np
-from scipy.signal import detrend, spectrogram, get_window
-from tremor_analysis.analysis_methods.base import AnalysisMethodBase
+from PIL import Image
+from scipy.signal import detrend, get_window, spectrogram
 
+from tremor_analysis.analysis_methods.base import AnalysisMethodBase
 from tremor_analysis.data_models.analysis_result import AnalysisResult
-from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
+from tremor_analysis.data_models.config_parameter import ConfigList, ConfigParameter
+from tremor_analysis.utils.result_image import fig2img
 
 
 class SpectrogramAnalysis(AnalysisMethodBase):
@@ -50,7 +54,7 @@ class SpectrogramAnalysis(AnalysisMethodBase):
             ),
             ConfigParameter(
                 key="max_frequency",
-                display_name="max_frequency",
+                display_name="max frequency",
                 value=20,
                 type=int,
             ),
@@ -63,7 +67,7 @@ class SpectrogramAnalysis(AnalysisMethodBase):
     ):
         super(SpectrogramAnalysis, self).__init__(config)
 
-    def run(self, data: list[np.ndarray]) -> dict[str, Any]:
+    def run(self, data: list[np.ndarray]) -> AnalysisResult:
         """
         解析を実行する．
 
@@ -119,12 +123,63 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         peak_freq = f[peak_idx[0][0]]
         peak_time = t[peak_idx[1][0]]
 
-        result: dict[str, Any] = {
-            "peak_amp": peak_amp.item(),
-            "peak_freq": peak_freq.item(),
-            "peak_time": peak_time.item(),
-        }
-        return result
+        image = self.create_result_image(specs)
+
+        return AnalysisResult(
+            analysis_method_class=type(self),
+            numerical_result={
+                "peak_amp": peak_amp.item(),
+                "peak_freq": peak_freq.item(),
+                "peak_time": peak_time.item(),
+            },
+            image_result={"spectrogram": image},
+            filename1=None,
+            filename2=None,
+        )
+
+    def create_result_image(self, specs: np.ndarray) -> Image.Image:
+        """
+        Create a spectrogram image from the spectrogram data.
+
+        specs: np.ndarray: Spectrogram data. [x, y, z, primary_component]
+        """
+        # create figure
+        vmin = np.min(specs)
+        vmax = np.max(specs)
+
+        fig, axs = plt.subplots(
+            2, 3, figsize=(12, 6), gridspec_kw={"height_ratios": [1, 1]}
+        )
+
+        # upper
+        ax_pca = plt.subplot2grid((2, 4), (0, 0), colspan=3)
+        im = ax_pca.imshow(
+            specs[-1], aspect="auto", origin="lower", vmin=vmin, vmax=vmax
+        )
+        ax_pca.set_title("norm")
+        ax_pca.set_ylabel("Frequency")
+        ax_pca.set_xticks([])
+
+        # lower
+        titles = ["X Spectrum", "Y Spectrum", "Z Spectrum"]
+        for i in range(3):
+            ax = plt.subplot2grid((2, 4), (1, i))
+            ax.imshow(specs[i], aspect="auto", origin="lower", vmin=vmin, vmax=vmax)
+            ax.set_title(titles[i])
+            ax.set_xlabel("Time")
+            if i == 0:
+                ax.set_ylabel("Frequency")
+            else:
+                ax.set_yticks([])
+
+        # color bar shared by all axes
+        cax = plt.subplot2grid((2, 4), (0, 3), rowspan=2)
+        fig.colorbar(im, cax=cax)
+
+        image = fig2img(fig)
+
+        plt.close(fig)
+        return image
 
 
 if __name__ == "__main__":
