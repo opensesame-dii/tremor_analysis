@@ -96,7 +96,7 @@ class MainApp:
                     np.loadtxt(
                         file_pair[0],
                         delimiter=",",
-                        dtype="unicode",
+                        dtype=float,
                         skiprows=row_start - 1,
                         usecols=range(column_start - 1, column_start + 2),
                         encoding=encoding,
@@ -108,7 +108,7 @@ class MainApp:
                     np.loadtxt(
                         file_pair[0],
                         delimiter=",",
-                        dtype="unicode",
+                        dtype=float,
                         skiprows=row_start - 1,
                         usecols=range(column_start - 1, column_start + 2),
                         encoding=encoding,
@@ -116,7 +116,7 @@ class MainApp:
                     np.loadtxt(
                         file_pair[1],
                         delimiter=",",
-                        dtype="unicode",
+                        dtype=float,
                         skiprows=row_start - 1,
                         usecols=range(column_start - 1, column_start + 2),
                         encoding=encoding,
