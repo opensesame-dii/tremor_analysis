@@ -5,11 +5,14 @@ from typing import Any, Optional
 
 import flet as ft
 import numpy as np
-from tremor_analysis.analysis_methods.base import AnalysisMethodBase
-from tremor_analysis.data_models.analysis_result import AnalysisResult
-from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
+from matplotlib import pyplot as plt
 from scipy.signal import butter, detrend, get_window, sosfilt, spectrogram
 from sklearn.decomposition import PCA
+
+from tremor_analysis.analysis_methods.base import AnalysisMethodBase
+from tremor_analysis.data_models.analysis_result import AnalysisResult
+from tremor_analysis.data_models.config_parameter import ConfigList, ConfigParameter
+from tremor_analysis.utils.result_image import fig2img
 
 
 class PowerDensityAnalysis(AnalysisMethodBase):
@@ -115,17 +118,76 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         peak_freq = f[peak_idx[0][0]]
         tsi = self.tremor_stability_index(data, self.config["sampling_rate"].value)
 
+        # TODO: FWHM(full width half maximum), HWP(half-width power) の実装
+        image = self.create_result_image(specs)
+
         return AnalysisResult(
             analysis_method_class=type(self),
             numerical_result={
                 "peak_amp": peak_amp.item(),
                 "peak_freq": peak_freq.item(),
                 "TSI": tsi,
+                # TODO: FWHM(full width half maximum), HWP(half-width power) を返す
             },
-            image_result={},
+            image_result={"power_density": image},
             filename1=None,
             filename2=None,
         )
+
+    def create_result_image(self, specs: np.ndarray) -> ft.Image:
+        """
+        Create a result image from the spectrogram data.
+
+        Args:
+            specs (np.ndarray): Spectrogram data.
+
+        Returns:
+            ft.Image: Result image.
+        """
+
+        # spectral amptitude
+        vmin = np.min(specs)
+        vmax = np.max(specs)
+
+        fig, axs = plt.subplots(
+            2, 3, figsize=(12, 6), gridspec_kw={"height_ratios": [1, 1]}
+        )
+
+        # upper
+        ax_pca = plt.subplot2grid((2, 4), (0, 0), colspan=3)
+        ax_pca.set_ylim(0, vmax * 1.2)
+        ax_pca.set_title("Spectral Amplitude")
+        ax_pca.set_xlabel("Frequency [Hz]")
+        ax_pca.set_ylabel("Amplitude")
+        ax_pca.plot(f, specs[3])
+
+        titles = ["X", "Y", "Z"]
+        for i in range(3):
+            ax = plt.subplot2grid((2, 4), (1, i))
+            ax.set_ylim(0, vmax * 1.2)
+            ax.set_title(titles[i])
+            ax.set_xlabel("Frequency [Hz]")
+            ax.set_ylabel("Amplitude")
+            ax.plot(f, specs[i])
+        # TODO: fwhmの結果から，グラフの色を塗る領域を決める
+        if (
+            res_lst[lst_idx]["sa_l"] is not None
+            and res_lst[lst_idx]["sa_u"] is not None
+        ):
+            ax_norm.fill_between(
+                res_lst[lst_idx]["sa_f"][
+                    res_lst[lst_idx]["sa_l"] : res_lst[lst_idx]["sa_u"]
+                ],
+                res_lst[lst_idx]["sa_graphs"][
+                    3, res_lst[lst_idx]["sa_l"] : res_lst[lst_idx]["sa_u"]
+                ],
+                color="r",
+                alpha=0.5,
+            )
+
+        image = fig2img(fig)
+        plt.close(fig)
+        return image
 
     # https://github.com/opensesame-dii/tremor_analysis_python/blob/master/multiple_analysis/multiple.py#L907
     def tremor_stability_index(self, data, fs) -> int:
