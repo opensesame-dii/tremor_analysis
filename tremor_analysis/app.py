@@ -153,69 +153,116 @@ class MainApp:
         results_2files: list[AnalysisResult],
     ) -> None:
 
+        # ファイルごとに解析結果をまとめる
+        def group_results_by_file(
+            results: list[AnalysisResult],
+        ) -> dict[str, list[AnalysisResult]]:
+            """ファイルごとに解析結果をグループ化する"""
+            grouped = {}
+            for result in results:
+                filename = result.filename1
+                if filename not in grouped:
+                    grouped[filename] = []
+                grouped[filename].append(result)
+            return grouped
+
+        # ファイルごとにヘッダーを作成
+        def create_header_from_grouped_results(
+            grouped_results: dict[str, list[AnalysisResult]],
+        ) -> list[str]:
+            """グループ化された結果からヘッダーを作成"""
+            header = []
+
+            # 全てのファイルに対して全ての解析が行われる前提のもと
+            # そのため，0番目のファイルに対する結果を見ればOKとした
+            file_results = grouped_results[list(grouped_results.keys())[0]]
+            for result in file_results:
+                header += [
+                    f"{result.analysis_method_class.__qualname__}_{key}"
+                    for key in result.numerical_result.keys()
+                ]
+            return sorted(list(set(header)))
+
+        # ファイルごとに結果行を作成
+        def create_result_row(
+            filename: str, file_results: list[AnalysisResult], header: list[str]
+        ) -> list:
+            """ファイルごとに結果行を作成"""
+            result_dict = {}
+            for result in file_results:
+                for key, value in result.numerical_result.items():
+                    header_key = f"{result.analysis_method_class.__qualname__}_{key}"
+                    result_dict[header_key] = value
+
+            # ヘッダーの順序に従って値を取得
+            result_row = [result_dict.get(header_key, "") for header_key in header]
+            return [filename] + result_row
+
         #  単一ファイルの結果出力
         output_1file = os.path.join(
             self.target_dir.value, "result_1file" + self.OUTPUT_FILE_EXTENSION
         )
-        #  一通りの結果の列名をmethod_result.numerical_resultから取得してヘッダー作成
 
-        header = []
-        header += [
-            f"{results_1file[0].analysis_method_class.__qualname__}_{key}"
-            for key in results_1file[0].numerical_result.keys()
-        ]
+        # ファイルごとに結果をグループ化
+        grouped_results_1file = group_results_by_file(results_1file)
+
+        # ヘッダー作成
+        header = create_header_from_grouped_results(grouped_results_1file)
+
         #  出力先ファイルの存在確認,なかったらheader書き込み
         if not os.path.isfile(output_1file):
             with open(output_1file, "w", newline="") as file:
                 writer = csv.writer(file)
                 writer.writerow(["filename"] + header)
+
+        # ファイルごとに結果を書き込み
         with open(output_1file, "a", newline="") as file:
             writer = csv.writer(file)
-            # method_result.numerical_resultのキーに対して総当たりで， f"{method_result.analysis_method_class.__qualname__}_{key}" がheaderの要素と一致するものを検索
-            # それの値を書き込み
-            for filename in list(result.filename1 for result in results_1file):
-                # headerの要素に対するループ
-                for method_result in results_1file:
-                    #  クラス名_key: valueの新しいresultリストを作成
-                    result_with_class = {
-                        f"{method_result.analysis_method_class.__qualname__}_{key}": value
-                        for key, value in method_result.numerical_result.items()
-                    }
-                    result_row = [
-                        result_with_class[header_key] for header_key in header
-                    ]
-                writer.writerow([filename] + result_row)
+            for filename, file_results in grouped_results_1file.items():
+                result_row = create_result_row(filename, file_results, header)
+                writer.writerow(result_row)
 
         output_2files = os.path.join(
             self.target_dir.value, "result_2file" + self.OUTPUT_FILE_EXTENSION
         )
 
         if len(results_2files) != 0:
-            # 一通りの結果の列名をmethod_result.numerical_resultから取得してヘッダー作成
-            header = []
-            header += [
-                f"{results_2files[0].analysis_method_class.__qualname__}_{key}"
-                for key in results_2files[0].numerical_result.keys()
-            ]
+            # 2ファイル解析の場合は、ファイルペアごとにグループ化
+            grouped_results_2files = {}
+            for result in results_2files:
+                file_pair = (result.filename1, result.filename2)
+                if file_pair not in grouped_results_2files:
+                    grouped_results_2files[file_pair] = []
+                grouped_results_2files[file_pair].append(result)
+
+            # ヘッダー作成
+            header = create_header_from_grouped_results(grouped_results_2files)
+
             # 出力先ファイルの存在確認,なかったらheader書き込み
             if not os.path.isfile(output_2files):
                 with open(output_2files, "w", newline="") as file:
                     writer = csv.writer(file)
                     writer.writerow(["filename1", "filename2"] + header)
+
+            # ファイルペアごとに結果を書き込み
             with open(output_2files, "a", newline="") as file:
                 writer = csv.writer(file)
+                for (
+                    filename1,
+                    filename2,
+                ), file_results in grouped_results_2files.items():
+                    result_dict = {}
+                    for result in file_results:
+                        for key, value in result.numerical_result.items():
+                            header_key = (
+                                f"{result.analysis_method_class.__qualname__}_{key}"
+                            )
+                            result_dict[header_key] = value
 
-                for results in results_2files:
-                    #  クラス名_key: valueの新しいresultリストを作成
-                    result_with_class = {
-                        f"{results.analysis_method_class.__qualname__}_{key}": value
-                        for key, value in results.numerical_result.items()
-                    }
                     result_row = [
-                        result_with_class[header_key] for header_key in header
+                        result_dict.get(header_key, "") for header_key in header
                     ]
-                    writer.writerow([results.filename1, results.filename2] + result_row)
-            pass
+                    writer.writerow([filename1, filename2] + result_row)
 
     def on_run_click(self, e: ControlEvent):
         """Buttonのon_clickでは, 引数にControlEventが渡されるが，run()では不要のため, この関数でwrapしている
