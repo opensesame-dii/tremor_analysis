@@ -119,7 +119,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         tsi = self.tremor_stability_index(data, self.config["sampling_rate"].value)
 
         # TODO: FWHM(full width half maximum), HWP(half-width power) の実装
-        image = self.create_result_image(specs)
+        image, fwhm, hwp = self.create_result_image(specs)
 
         return AnalysisResult(
             analysis_method_class=type(self),
@@ -127,7 +127,8 @@ class PowerDensityAnalysis(AnalysisMethodBase):
                 "peak_amp": peak_amp.item(),
                 "peak_freq": peak_freq.item(),
                 "TSI": tsi,
-                # TODO: FWHM(full width half maximum), HWP(half-width power) を返す
+                "FWHM": fwhm,
+                "HWP": hwp,
             },
             image_result={"power_density": image},
             filename1=None,
@@ -184,7 +185,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
 
         image = fig2img(fig)
         plt.close(fig)
-        return image
+        return image, fwhm, hwp
 
     def full_width_half_maximum(self, x, y):
         """
