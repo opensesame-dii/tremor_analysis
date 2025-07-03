@@ -11,6 +11,7 @@ import yaml
 from flet import ControlEvent
 
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase, AnalysisResult
+from tremor_analysis.analysis_methods.coherence import CoherenceAnalysis
 from tremor_analysis.analysis_methods.dummy import (
     DummyAnalysis,
     DummyAnalysisCapableTwoData,
@@ -96,7 +97,7 @@ class MainApp:
                     np.loadtxt(
                         file_pair[0],
                         delimiter=",",
-                        dtype="unicode",
+                        dtype=float,
                         skiprows=row_start - 1,
                         usecols=range(column_start - 1, column_start + 2),
                         encoding=encoding,
@@ -108,7 +109,7 @@ class MainApp:
                     np.loadtxt(
                         file_pair[0],
                         delimiter=",",
-                        dtype="unicode",
+                        dtype=float,
                         skiprows=row_start - 1,
                         usecols=range(column_start - 1, column_start + 2),
                         encoding=encoding,
@@ -116,7 +117,7 @@ class MainApp:
                     np.loadtxt(
                         file_pair[1],
                         delimiter=",",
-                        dtype="unicode",
+                        dtype=float,
                         skiprows=row_start - 1,
                         usecols=range(column_start - 1, column_start + 2),
                         encoding=encoding,
@@ -129,8 +130,8 @@ class MainApp:
                 for method in self.analysis_methods:
                     if method.ACCEPTABLE_DATA_COUNT == 1:
                         for i, file in enumerate(file_pair):
-                            result = method.run(data)
-                            result.filename1 = file_pair[0]
+                            result = method.run([data[i]])
+                            result.filename1 = file_pair[i]
                             results_1file.append(result)
                     elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 2:
                         # 左右の手のデータペアを受け入れる解析

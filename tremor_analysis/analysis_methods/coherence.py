@@ -6,9 +6,10 @@ from typing import Any, Optional
 import flet as ft
 import numpy as np
 from matplotlib.mlab import cohere, window_hanning
+
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase
 from tremor_analysis.data_models.analysis_result import AnalysisResult
-from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
+from tremor_analysis.data_models.config_parameter import ConfigList, ConfigParameter
 
 
 class CoherenceAnalysis(AnalysisMethodBase):
@@ -62,9 +63,13 @@ class CoherenceAnalysis(AnalysisMethodBase):
         Returns:
             dict[str, Any]: 解析結果．項目名と値のdict
         """
+        # x, y, zの成分のノルムを計算
+        # The effect of 8 weeks of treatment with transcranial pulsed
+        # electromagnetic fields on hand tremor and inter-hand coherence in per
+        x1 = np.linalg.norm(data[0], axis=1)
+        x2 = np.linalg.norm(data[1], axis=1)
+
         # 解析処理
-        x1 = data[0]
-        x2 = data[1]
         nfft = 2**8
         noverlap = 2**7
         Cyx, f = cohere(
