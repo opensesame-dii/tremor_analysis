@@ -11,14 +11,14 @@ import yaml
 from flet import ControlEvent
 
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase, AnalysisResult
+from tremor_analysis.analysis_methods.coherence import CoherenceAnalysis
 from tremor_analysis.analysis_methods.dummy import (
     DummyAnalysis,
     DummyAnalysisCapableTwoData,
 )
-from tremor_analysis.analysis_methods.spectrogram import SpectrogramAnalysis
-from tremor_analysis.analysis_methods.coherence import CoherenceAnalysis
 from tremor_analysis.analysis_methods.power_density import PowerDensityAnalysis
-from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
+from tremor_analysis.analysis_methods.spectrogram import SpectrogramAnalysis
+from tremor_analysis.data_models.config_parameter import ConfigList, ConfigParameter
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
 from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
 
@@ -129,8 +129,8 @@ class MainApp:
                 for method in self.analysis_methods:
                     if method.ACCEPTABLE_DATA_COUNT == 1:
                         for i, file in enumerate(file_pair):
-                            result = method.run(data)
-                            result.filename1 = file_pair[0]
+                            result = method.run([data[i]])
+                            result.filename1 = file_pair[i]
                             results_1file.append(result)
                     elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 2:
                         # 左右の手のデータペアを受け入れる解析
