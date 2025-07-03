@@ -149,13 +149,11 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         # create figure
         vmin = np.min(specs)
         vmax = np.max(specs)
-
-        fig, axs = plt.subplots(
-            2, 3, figsize=(12, 6), gridspec_kw={"height_ratios": [1, 1]}
-        )
+        fig = plt.figure(figsize=(12, 6))
+        gs = fig.add_gridspec(2, 4, height_ratios=[1, 1])
 
         # upper
-        ax_pca = plt.subplot2grid((2, 4), (0, 0), colspan=3)
+        ax_pca = fig.add_subplot(gs[0, :3])
         im = ax_pca.imshow(
             specs[-1], aspect="auto", origin="lower", vmin=vmin, vmax=vmax
         )
@@ -166,7 +164,7 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         # lower
         titles = ["X Spectrum", "Y Spectrum", "Z Spectrum"]
         for i in range(3):
-            ax = plt.subplot2grid((2, 4), (1, i))
+            ax = fig.add_subplot(gs[1, i])
             ax.imshow(specs[i], aspect="auto", origin="lower", vmin=vmin, vmax=vmax)
             ax.set_title(titles[i])
             ax.set_xlabel("Time")
@@ -176,11 +174,10 @@ class SpectrogramAnalysis(AnalysisMethodBase):
                 ax.set_yticks([])
 
         # color bar shared by all axes
-        cax = plt.subplot2grid((2, 4), (0, 3), rowspan=2)
+        cax = fig.add_subplot(gs[:, 3])
         fig.colorbar(im, cax=cax)
-
+        plt.tight_layout()
         image = fig2img(fig)
-
         plt.close(fig)
         return image
 

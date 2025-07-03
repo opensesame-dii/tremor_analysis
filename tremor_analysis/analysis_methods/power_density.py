@@ -151,12 +151,11 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         vmin = np.min(specs)
         vmax = np.max(specs)
 
-        fig, axs = plt.subplots(
-            2, 3, figsize=(12, 6), gridspec_kw={"height_ratios": [1, 1]}
-        )
+        fig = plt.figure(figsize=(12, 6))
+        gs = fig.add_gridspec(2, 3, height_ratios=[1, 1])
 
         # upper_freq
-        ax_pca = plt.subplot2grid((2, 4), (0, 0), colspan=3)
+        ax_pca = fig.add_subplot(gs[0, :3])
         ax_pca.set_ylim(0, vmax * 1.2)
         ax_pca.set_title("Spectral Amplitude")
         ax_pca.set_xlabel("Frequency [Hz]")
@@ -165,7 +164,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
 
         titles = ["X", "Y", "Z"]
         for i in range(3):
-            ax = plt.subplot2grid((2, 4), (1, i))
+            ax = fig.add_subplot(gs[1, i])
             ax.set_ylim(0, vmax * 1.2)
             ax.set_title(titles[i])
             ax.set_xlabel("Frequency [Hz]")
@@ -183,6 +182,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
                 alpha=0.5,
             )
 
+        plt.tight_layout()
         image = fig2img(fig)
         plt.close(fig)
         return image, is_estimated, fwhm, hwp
