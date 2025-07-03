@@ -5,11 +5,12 @@ from typing import Any, Optional
 
 import flet as ft
 import numpy as np
-from tremor_analysis.analysis_methods.base import AnalysisMethodBase
-from tremor_analysis.data_models.analysis_result import AnalysisResult
-from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
 from scipy.signal import butter, detrend, get_window, sosfilt, spectrogram
 from sklearn.decomposition import PCA
+
+from tremor_analysis.analysis_methods.base import AnalysisMethodBase
+from tremor_analysis.data_models.analysis_result import AnalysisResult
+from tremor_analysis.data_models.config_parameter import ConfigList, ConfigParameter
 
 
 class PowerDensityAnalysis(AnalysisMethodBase):
@@ -82,7 +83,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         specs = []
         for i in range(3):
             f, t, spec = spectrogram(
-                detrend(data[i]),
+                detrend(data[:, i]),
                 self.config["sampling_rate"].value,
                 window=get_window("hamming", int(self.config["nperseg"].value)),
                 nperseg=int(self.config["nperseg"].value),
