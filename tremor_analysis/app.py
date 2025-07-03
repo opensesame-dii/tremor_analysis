@@ -146,6 +146,23 @@ class MainApp:
             results_1file=results_1file,
             results_2files=results_2files,
         )
+        bs = ft.BottomSheet(
+            ft.Container(
+                ft.Column(
+                    [
+                        ft.Text("Finished"),
+                        ft.ElevatedButton(
+                            "Done", on_click=lambda _: self.page.close_bottom_sheet()
+                        ),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    tight=True,
+                ),
+                padding=50,
+            ),
+            open=False,
+        )
+        self.page.show_bottom_sheet(bs)
 
     def append_result_file(
         self,
