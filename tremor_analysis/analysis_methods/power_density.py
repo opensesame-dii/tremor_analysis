@@ -134,7 +134,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
             filename2=None,
         )
 
-    def create_result_image(self, specs: np.ndarray) -> ft.Image:
+    def create_result_image(self, specs: np.ndarray, f: np.ndarray) -> ft.Image:
         """
         Create a result image from the spectrogram data.
 
@@ -170,24 +170,91 @@ class PowerDensityAnalysis(AnalysisMethodBase):
             ax.set_ylabel("Amplitude")
             ax.plot(f, specs[i])
         # TODO: fwhmの結果から，グラフの色を塗る領域を決める
-        if (
-            res_lst[lst_idx]["sa_l"] is not None
-            and res_lst[lst_idx]["sa_u"] is not None
-        ):
-            ax_norm.fill_between(
-                res_lst[lst_idx]["sa_f"][
-                    res_lst[lst_idx]["sa_l"] : res_lst[lst_idx]["sa_u"]
-                ],
-                res_lst[lst_idx]["sa_graphs"][
-                    3, res_lst[lst_idx]["sa_l"] : res_lst[lst_idx]["sa_u"]
-                ],
-                color="r",
-                alpha=0.5,
-            )
+        is_estimated, l, u, lv, uv, hwp = self.full_width_half_maximum(f, specs[3])
+        if uv is None and lv is None:
+            fwhm = "None"
+            hwp = "None"
+        elif is_estimated:
+            fwhm = str(uv - lv) + "(estimated)"
+            hwp = str(hwp) + "(estimated)"
+        else:
+            fwhm = uv - lv
+        if l is not None and u is not None:
+            ax_pca.fill_between(f[l:u], specs[3, l:u], color="r", alpha=0.5)
 
         image = fig2img(fig)
         plt.close(fig)
         return image
+
+    def full_width_half_maximum(self, x, y):
+        """
+        calcurate Full-width Half Maximum and Half-witdh power
+
+        Params
+        x: array-like
+        y: array-like
+
+        Retuerns
+        is_estimated: bool
+            whether estimation value is used
+        lower: int
+            lower limit index
+        upper: int
+            upper limit index
+        lower_v: int/float
+            lower limit value (approximate)
+        upper_v: int/float
+            upper limit value (approximate)
+        hwp: int/float
+            Half-width power
+        """
+        y_ndarray = np.array(y)
+        length = len(y_ndarray)
+        peak_val_half = np.max(y_ndarray) / 2
+        peak_idx = y_ndarray.argmax()
+        # print(peak_idx)
+        lower = peak_idx
+        upper = peak_idx
+        d = np.abs(x[1] - x[0])
+        is_estimated = False
+
+        while lower > 0 and y_ndarray[lower] > peak_val_half:
+            lower -= 1
+        if y_ndarray[lower] != peak_val_half and lower != 0:
+            lower_v = x[lower] + d * (peak_val_half - y_ndarray[lower]) / (
+                y_ndarray[lower + 1] - y_ndarray[lower]
+            )  # linear interpolation
+        else:
+            lower_v = x[lower]
+
+        while upper < length - 1 and y_ndarray[upper] > peak_val_half:
+            upper += 1
+        if y_ndarray[upper] != peak_val_half and upper != length - 1:
+            upper_v = x[upper] - d * (peak_val_half - y_ndarray[upper]) / (
+                y_ndarray[upper - 1] - y_ndarray[upper]
+            )  # linear interpolation
+        else:
+            upper_v = x[upper]
+
+        if lower == 0 and upper == length - 1:
+            return (False, None, None, None, None, None)
+
+        # judge whether estimation value is used.
+        if lower == 0:
+            is_estimated = True
+            upper_v = x[upper]
+            lower_v = x[peak_idx] - (x[upper] - x[peak_idx])
+            hwp = np.sum(y_ndarray[peak_idx:upper]) * d * 2
+        elif upper == length - 1:
+            is_estimated = True
+            lower_v = x[lower]
+            upper_v = x[peak_idx] + (x[peak_idx] - x[lower])
+            hwp = np.sum(y_ndarray[lower:peak_idx]) * d * 2
+        else:
+            # not estimated
+            hwp = np.sum(y_ndarray[lower:upper]) * d
+
+        return (is_estimated, lower, upper, lower_v, upper_v, hwp)
 
     # https://github.com/opensesame-dii/tremor_analysis_python/blob/master/multiple_analysis/multiple.py#L907
     def tremor_stability_index(self, data, fs) -> int:
