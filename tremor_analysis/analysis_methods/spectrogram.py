@@ -5,6 +5,7 @@ import io
 from typing import Any, Optional
 
 import flet as ft
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
@@ -14,6 +15,8 @@ from tremor_analysis.analysis_methods.base import AnalysisMethodBase
 from tremor_analysis.data_models.analysis_result import AnalysisResult
 from tremor_analysis.data_models.config_parameter import ConfigList, ConfigParameter
 from tremor_analysis.utils.result_image import fig2img
+
+matplotlib.use("agg")
 
 
 class SpectrogramAnalysis(AnalysisMethodBase):
@@ -90,7 +93,7 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         for i in range(3):
             # scipy
             f, t, spec = spectrogram(
-                detrend(data[i]),
+                detrend(data[:, i]),
                 self.config["sampling_rate"].value,
                 window=get_window("hamming", int(self.config["nperseg"].value)),
                 nperseg=int(self.config["nperseg"].value),
@@ -187,4 +190,5 @@ if __name__ == "__main__":
     x = np.linspace(0, 10, 6000)
     y = np.sin(x)
     data = [np.tile(y[np.newaxis, :], (3, 1))]
+    print(f"{data[0].shape=}")
     print(analysis.run(data))
