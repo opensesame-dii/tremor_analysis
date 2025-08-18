@@ -189,10 +189,10 @@ class PowerDensityAnalysis(AnalysisMethodBase):
 
     def full_width_half_maximum(self, x, y):
         """
-        calcurate Full-width Half Maximum and Half-witdh power
+        calculate Full-width Half Maximum and Half-width power
 
         Params
-        x: array-like
+        x: array-like, equally spaced intervals
         y: array-like
 
         Retuerns
@@ -215,7 +215,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         peak_idx = y_ndarray.argmax()
         lower_freq = peak_idx
         upper_freq = peak_idx
-        d = np.abs(x[1] - x[0])
+        d = np.abs(x[1] - x[0])  # x is equally spaced intervals
         is_estimated = False
 
         while lower_freq > 0 and y_ndarray[lower_freq] > peak_val_half:
@@ -261,13 +261,13 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         if upper_value is None and lower_value is None:
             fwhm = float("nan")
             hwp = float("nan")
-            is_estimated = 0  # False
+            is_estimated = False
         elif is_estimated:
             fwhm = upper_value - lower_value
-            is_estimated = 1  # True
+            is_estimated = True
         else:
             fwhm = upper_value - lower_value
-            is_estimated = 0  # False
+            is_estimated = False
 
         return (is_estimated, lower_freq, upper_freq, hwp, fwhm)
 
