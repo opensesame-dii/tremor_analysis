@@ -202,12 +202,10 @@ class PowerDensityAnalysis(AnalysisMethodBase):
             lower_freq limit index
         upper_freq: int
             upper_freq limit index
-        lower_value: int/float
-            lower_freq limit value (approximate)
-        upper_value: int/float
-            upper_freq limit value (approximate)
         hwp: int/float
             Half-width power
+        fwhm: int/float
+            Full-width Half Maximum
         """
         y_ndarray = np.array(y)
         length = len(y_ndarray)
@@ -241,7 +239,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
             upper_value = x[upper_freq]
 
         if lower_freq == 0 and upper_freq == length - 1:
-            return (False, None, None, None, None, None)
+            return (False, None, None, None, None)
 
         # judge whether estimation value is used.
         if lower_freq == 0:
