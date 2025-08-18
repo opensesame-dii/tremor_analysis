@@ -261,10 +261,10 @@ class PowerDensityAnalysis(AnalysisMethodBase):
             hwp = float("nan")
             is_estimated = False
         elif is_estimated:
-            fwhm = upper_value - lower_value
+            fwhm = upper_freq - lower_freq
             is_estimated = True
         else:
-            fwhm = upper_value - lower_value
+            fwhm = upper_freq - lower_freq
             is_estimated = False
 
         return (is_estimated, lower_freq, upper_freq, hwp, fwhm)
