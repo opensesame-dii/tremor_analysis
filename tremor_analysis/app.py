@@ -16,10 +16,12 @@ from tremor_analysis.analysis_methods.dummy import (
     DummyAnalysis,
     DummyAnalysisCapableTwoData,
 )
-from tremor_analysis.analysis_methods.power_density import PowerDensityAnalysis
 from tremor_analysis.analysis_methods.spectrogram import SpectrogramAnalysis
-from tremor_analysis.data_models.config_parameter import ConfigList, ConfigParameter
+from tremor_analysis.analysis_methods.coherence import CoherenceAnalysis
+from tremor_analysis.analysis_methods.power_density import PowerDensityAnalysis
+from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
+from tremor_analysis.utils.path import remove_extension
 from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
 
 CONFIG_FILE_PATH = Path.home() / ".tremor_analysis_config.yaml"
@@ -146,6 +148,34 @@ class MainApp:
             results_1file=results_1file,
             results_2files=results_2files,
         )
+        self.save_images(results_1file, results_2files)
+
+    def save_images(
+        self, results_1file: list[AnalysisResult], results_2files: list[AnalysisResult]
+    ):
+        # 画像保存先ディレクトリの作成
+        images_dir = os.path.join(self.target_dir.value, "result_images")
+        os.makedirs(images_dir, exist_ok=True)
+
+        for result in results_1file:
+            for key, value in result.image_result.items():
+                value.save(
+                    os.path.join(
+                        images_dir,
+                        f"{os.path.basename(remove_extension(result.filename1))}_"
+                        f"{result.analysis_method_class.__qualname__}_{key}.png",
+                    )
+                )
+        for result in results_2files:
+            for key, value in result.image_result.items():
+                value.save(
+                    os.path.join(
+                        images_dir,
+                        f"{os.path.basename(remove_extension(result.filename1))}_"
+                        f"{os.path.basename(remove_extension(result.filename2))}_"
+                        f"{result.analysis_method_class.__qualname__}_{key}.png",
+                    )
+                )
 
     def append_result_file(
         self,

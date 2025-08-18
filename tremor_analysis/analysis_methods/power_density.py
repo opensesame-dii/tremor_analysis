@@ -5,12 +5,14 @@ from typing import Any, Optional
 
 import flet as ft
 import numpy as np
+from matplotlib import pyplot as plt
 from scipy.signal import butter, detrend, get_window, sosfilt, spectrogram
 from sklearn.decomposition import PCA
 
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase
 from tremor_analysis.data_models.analysis_result import AnalysisResult
 from tremor_analysis.data_models.config_parameter import ConfigList, ConfigParameter
+from tremor_analysis.utils.result_image import fig2img
 
 
 class PowerDensityAnalysis(AnalysisMethodBase):
@@ -116,17 +118,158 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         peak_freq = f[peak_idx[0][0]]
         tsi = self.tremor_stability_index(data, self.config["sampling_rate"].value)
 
+        # TODO: FWHM(full width half maximum), HWP(half-width power) の実装
+        image, is_estimated, fwhm, hwp = self.create_result_image(specs, f)
+
         return AnalysisResult(
             analysis_method_class=type(self),
             numerical_result={
                 "peak_amp": peak_amp.item(),
                 "peak_freq": peak_freq.item(),
                 "TSI": tsi,
+                "FWHM": fwhm,
+                "HWP": hwp,
+                "is_estimated": is_estimated,
             },
-            image_result={},
+            image_result={"power_density": image},
             filename1=None,
             filename2=None,
         )
+
+    def create_result_image(self, specs: np.ndarray, f: np.ndarray) -> ft.Image:
+        """
+        Create a result image from the spectrogram data.
+
+        Args:
+            specs (np.ndarray): Spectrogram data.
+
+        Returns:
+            ft.Image: Result image.
+        """
+
+        # spectral amptitude
+        vmin = np.min(specs)
+        vmax = np.max(specs)
+
+        fig = plt.figure(figsize=(12, 6))
+        gs = fig.add_gridspec(2, 3, height_ratios=[1, 1])
+
+        # upper_freq
+        ax_pca = fig.add_subplot(gs[0, :3])
+        ax_pca.set_ylim(0, vmax * 1.2)
+        ax_pca.set_title("Spectral Amplitude")
+        ax_pca.set_xlabel("Frequency [Hz]")
+        ax_pca.set_ylabel("Amplitude")
+        ax_pca.plot(f, specs[3])
+
+        titles = ["X", "Y", "Z"]
+        for i in range(3):
+            ax = fig.add_subplot(gs[1, i])
+            ax.set_ylim(0, vmax * 1.2)
+            ax.set_title(titles[i])
+            ax.set_xlabel("Frequency [Hz]")
+            ax.set_ylabel("Amplitude")
+            ax.plot(f, specs[i])
+        # TODO: fwhmの結果から，グラフの色を塗る領域を決める
+        is_estimated, lower_freq, upper_freq, hwp, fwhm = self.full_width_half_maximum(
+            f, specs[3]
+        )
+        if lower_freq is not None and upper_freq is not None:
+            ax_pca.fill_between(
+                f[lower_freq:upper_freq],
+                specs[3, lower_freq:upper_freq],
+                color="r",
+                alpha=0.5,
+            )
+
+        plt.tight_layout()
+        image = fig2img(fig)
+        plt.close(fig)
+        return image, is_estimated, fwhm, hwp
+
+    def full_width_half_maximum(self, x, y):
+        """
+        calcurate Full-width Half Maximum and Half-witdh power
+
+        Params
+        x: array-like
+        y: array-like
+
+        Retuerns
+        is_estimated: bool
+            whether estimation value is used
+        lower_freq: int
+            lower_freq limit index
+        upper_freq: int
+            upper_freq limit index
+        lower_value: int/float
+            lower_freq limit value (approximate)
+        upper_value: int/float
+            upper_freq limit value (approximate)
+        hwp: int/float
+            Half-width power
+        """
+        y_ndarray = np.array(y)
+        length = len(y_ndarray)
+        peak_val_half = np.max(y_ndarray) / 2
+        peak_idx = y_ndarray.argmax()
+        lower_freq = peak_idx
+        upper_freq = peak_idx
+        d = np.abs(x[1] - x[0])
+        is_estimated = False
+
+        while lower_freq > 0 and y_ndarray[lower_freq] > peak_val_half:
+            lower_freq -= 1
+        if y_ndarray[lower_freq] != peak_val_half and lower_freq != 0:
+            lower_value = x[lower_freq] + d * (
+                peak_val_half - y_ndarray[lower_freq]
+            ) / (
+                y_ndarray[lower_freq + 1] - y_ndarray[lower_freq]
+            )  # linear interpolation
+        else:
+            lower_value = x[lower_freq]
+
+        while upper_freq < length - 1 and y_ndarray[upper_freq] > peak_val_half:
+            upper_freq += 1
+        if y_ndarray[upper_freq] != peak_val_half and upper_freq != length - 1:
+            upper_value = x[upper_freq] - d * (
+                peak_val_half - y_ndarray[upper_freq]
+            ) / (
+                y_ndarray[upper_freq - 1] - y_ndarray[upper_freq]
+            )  # linear interpolation
+        else:
+            upper_value = x[upper_freq]
+
+        if lower_freq == 0 and upper_freq == length - 1:
+            return (False, None, None, None, None, None)
+
+        # judge whether estimation value is used.
+        if lower_freq == 0:
+            is_estimated = True
+            upper_value = x[upper_freq]
+            lower_value = x[peak_idx] - (x[upper_freq] - x[peak_idx])
+            hwp = np.sum(y_ndarray[peak_idx:upper_freq]) * d * 2
+        elif upper_freq == length - 1:
+            is_estimated = True
+            lower_value = x[lower_freq]
+            upper_value = x[peak_idx] + (x[peak_idx] - x[lower_freq])
+            hwp = np.sum(y_ndarray[lower_freq:peak_idx]) * d * 2
+        else:
+            # not estimated
+            hwp = np.sum(y_ndarray[lower_freq:upper_freq]) * d
+
+        if upper_value is None and lower_value is None:
+            fwhm = float("nan")
+            hwp = float("nan")
+            is_estimated = 0  # False
+        elif is_estimated:
+            fwhm = upper_value - lower_value
+            is_estimated = 1  # True
+        else:
+            fwhm = upper_value - lower_value
+            is_estimated = 0  # False
+
+        return (is_estimated, lower_freq, upper_freq, hwp, fwhm)
 
     # https://github.com/opensesame-dii/tremor_analysis_python/blob/master/multiple_analysis/multiple.py#L907
     def tremor_stability_index(self, data, fs) -> int:
