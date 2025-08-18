@@ -147,6 +147,31 @@ class MainApp:
             results_1file=results_1file,
             results_2files=results_2files,
         )
+        self.save_images(results_1file, results_2files)
+
+    def save_images(
+        self, results_1file: list[AnalysisResult], results_2files: list[AnalysisResult]
+    ):
+        # 画像保存先ディレクトリの作成
+        images_dir = os.path.join(self.target_dir.value, "result_images")
+        os.makedirs(images_dir, exist_ok=True)
+
+        for result in results_1file:
+            for key, value in result.image_result.items():
+                value.save(
+                    os.path.join(
+                        images_dir,
+                        f"{result.filename1}_{result.analysis_method_class.__qualname__}_{key}.png",
+                    )
+                )
+        for result in results_2files:
+            for key, value in result.image_result.items():
+                value.save(
+                    os.path.join(
+                        images_dir,
+                        f"{result.filename1}_{result.filename2}_{result.analysis_method_class.__qualname__}_{key}.png",
+                    )
+                )
 
     def append_result_file(
         self,
