@@ -119,7 +119,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         tsi = self.tremor_stability_index(data, self.config["sampling_rate"].value)
 
         # TODO: FWHM(full width half maximum), HWP(half-width power) の実装
-        image, is_estimated, fwhm, hwp = self.create_result_image(specs, f)
+        image, is_estimated_value, fwhm, hwp = self.create_result_image(specs, f)
 
         return AnalysisResult(
             analysis_method_class=type(self),
@@ -129,7 +129,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
                 "TSI": tsi,
                 "FWHM": fwhm,
                 "HWP": hwp,
-                "is_estimated": is_estimated,
+                "is_estimated_value": is_estimated_value,
             },
             image_result={"power_density": image},
             filename1=None,
@@ -154,7 +154,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         fig = plt.figure(figsize=(12, 6))
         gs = fig.add_gridspec(2, 3, height_ratios=[1, 1])
 
-        # upper_freq
+        # upper_idx
         ax_pca = fig.add_subplot(gs[0, :3])
         ax_pca.set_ylim(0, vmax * 1.2)
         ax_pca.set_title("Spectral Amplitude")
@@ -171,13 +171,13 @@ class PowerDensityAnalysis(AnalysisMethodBase):
             ax.set_ylabel("Amplitude")
             ax.plot(f, specs[i])
         # TODO: fwhmの結果から，グラフの色を塗る領域を決める
-        is_estimated, lower_freq, upper_freq, hwp, fwhm = self.full_width_half_maximum(
-            f, specs[3]
+        is_estimated_value, lower_idx, upper_idx, hwp, fwhm = (
+            self.full_width_half_maximum(f, specs[3])
         )
-        if lower_freq is not None and upper_freq is not None:
+        if lower_idx is not None and upper_idx is not None:
             ax_pca.fill_between(
-                f[lower_freq:upper_freq],
-                specs[3, lower_freq:upper_freq],
+                f[lower_idx:upper_idx],
+                specs[3, lower_idx:upper_idx],
                 color="r",
                 alpha=0.5,
             )
@@ -185,91 +185,88 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         plt.tight_layout()
         image = fig2img(fig)
         plt.close(fig)
-        return image, is_estimated, fwhm, hwp
+        return image, is_estimated_value, fwhm, hwp
 
     def full_width_half_maximum(self, x, y):
         """
-        calcurate Full-width Half Maximum and Half-witdh power
+        calculate Full-width Half Maximum and Half-width power
 
         Params
-        x: array-like
+        x: array-like, equally spaced intervals
         y: array-like
 
         Retuerns
-        is_estimated: bool
+        is_estimated_value: bool
             whether estimation value is used
-        lower_freq: int
-            lower_freq limit index
-        upper_freq: int
-            upper_freq limit index
-        lower_value: int/float
-            lower_freq limit value (approximate)
-        upper_value: int/float
-            upper_freq limit value (approximate)
+        lower_idx: int
+            lower_idx limit index
+        upper_idx: int
+            upper_idx limit index
         hwp: int/float
             Half-width power
+        fwhm: int/float
+            Full-width Half Maximum
         """
         y_ndarray = np.array(y)
         length = len(y_ndarray)
         peak_val_half = np.max(y_ndarray) / 2
         peak_idx = y_ndarray.argmax()
-        lower_freq = peak_idx
-        upper_freq = peak_idx
-        d = np.abs(x[1] - x[0])
-        is_estimated = False
+        lower_idx = peak_idx
+        upper_idx = peak_idx
+        d = np.abs(x[1] - x[0])  # x is equally spaced intervals
+        is_estimated_value = False
 
-        while lower_freq > 0 and y_ndarray[lower_freq] > peak_val_half:
-            lower_freq -= 1
-        if y_ndarray[lower_freq] != peak_val_half and lower_freq != 0:
-            lower_value = x[lower_freq] + d * (
-                peak_val_half - y_ndarray[lower_freq]
-            ) / (
-                y_ndarray[lower_freq + 1] - y_ndarray[lower_freq]
+        # find lower limit index
+        while lower_idx > 0 and y_ndarray[lower_idx] > peak_val_half:
+            lower_idx -= 1
+        if y_ndarray[lower_idx] != peak_val_half and lower_idx != 0:
+            lower_x = x[lower_idx] + d * (peak_val_half - y_ndarray[lower_idx]) / (
+                y_ndarray[lower_idx + 1] - y_ndarray[lower_idx]
             )  # linear interpolation
         else:
-            lower_value = x[lower_freq]
+            lower_x = x[lower_idx]
 
-        while upper_freq < length - 1 and y_ndarray[upper_freq] > peak_val_half:
-            upper_freq += 1
-        if y_ndarray[upper_freq] != peak_val_half and upper_freq != length - 1:
-            upper_value = x[upper_freq] - d * (
-                peak_val_half - y_ndarray[upper_freq]
-            ) / (
-                y_ndarray[upper_freq - 1] - y_ndarray[upper_freq]
+        # find upper limit index
+        while upper_idx < length - 1 and y_ndarray[upper_idx] > peak_val_half:
+            upper_idx += 1
+        if y_ndarray[upper_idx] != peak_val_half and upper_idx != length - 1:
+            upper_x = x[upper_idx] - d * (peak_val_half - y_ndarray[upper_idx]) / (
+                y_ndarray[upper_idx - 1] - y_ndarray[upper_idx]
             )  # linear interpolation
         else:
-            upper_value = x[upper_freq]
+            upper_x = x[upper_idx]
 
-        if lower_freq == 0 and upper_freq == length - 1:
-            return (False, None, None, None, None, None)
+        # if all y values over half of peak value, return None
+        if lower_idx == 0 and upper_idx == length - 1:
+            return (False, None, None, None, None)
 
         # judge whether estimation value is used.
-        if lower_freq == 0:
-            is_estimated = True
-            upper_value = x[upper_freq]
-            lower_value = x[peak_idx] - (x[upper_freq] - x[peak_idx])
-            hwp = np.sum(y_ndarray[peak_idx:upper_freq]) * d * 2
-        elif upper_freq == length - 1:
-            is_estimated = True
-            lower_value = x[lower_freq]
-            upper_value = x[peak_idx] + (x[peak_idx] - x[lower_freq])
-            hwp = np.sum(y_ndarray[lower_freq:peak_idx]) * d * 2
+        if lower_idx == 0:
+            is_estimated_value = True
+            upper_x = x[upper_idx]
+            lower_x = x[peak_idx] - (x[upper_idx] - x[peak_idx])
+            hwp = np.sum(y_ndarray[peak_idx:upper_idx]) * d * 2
+        elif upper_idx == length - 1:
+            is_estimated_value = True
+            lower_x = x[lower_idx]
+            upper_x = x[peak_idx] + (x[peak_idx] - x[lower_idx])
+            hwp = np.sum(y_ndarray[lower_idx:peak_idx]) * d * 2
         else:
             # not estimated
-            hwp = np.sum(y_ndarray[lower_freq:upper_freq]) * d
+            hwp = np.sum(y_ndarray[lower_idx:upper_idx]) * d
 
-        if upper_value is None and lower_value is None:
+        if upper_x is None and lower_x is None:
             fwhm = float("nan")
             hwp = float("nan")
-            is_estimated = 0  # False
-        elif is_estimated:
-            fwhm = upper_value - lower_value
-            is_estimated = 1  # True
+            is_estimated_value = False
+        elif is_estimated_value:
+            fwhm = upper_x - lower_x
+            is_estimated_value = True
         else:
-            fwhm = upper_value - lower_value
-            is_estimated = 0  # False
+            fwhm = upper_x - lower_x
+            is_estimated_value = False
 
-        return (is_estimated, lower_freq, upper_freq, hwp, fwhm)
+        return (is_estimated_value, lower_idx, upper_idx, hwp, fwhm)
 
     # https://github.com/opensesame-dii/tremor_analysis_python/blob/master/multiple_analysis/multiple.py#L907
     def tremor_stability_index(self, data, fs) -> int:
