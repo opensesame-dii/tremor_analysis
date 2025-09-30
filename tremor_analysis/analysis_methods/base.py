@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image
 
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
+from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
 
 
 @dataclasses.dataclass
@@ -25,13 +26,6 @@ class AnalysisResult:
     filename2: Optional[str]
 
 
-@dataclasses.dataclass
-class ConfigParameter:
-    name: str
-    value: Any
-    type: Union[Type[int], Type[float]]
-
-
 class AnalysisMethodBase(ABC):
     """
     解析クラス
@@ -43,32 +37,36 @@ class AnalysisMethodBase(ABC):
 
     ACCEPTABLE_DATA_COUNT: int = 1  # 実行時に受け取るべきデータの配列の数
 
-    config = [
-        ConfigParameter(
-            name="param1 (Hz)",  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
-            value=1.0,
-            type=float,
-        ),
-        ConfigParameter(
-            name="param2 (sec)",  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
-            value=2,
-            type=int,
-        ),
-    ]
+    config: ConfigList = ConfigList(
+        [
+            ConfigParameter(
+                key="param1",
+                display_name="param1 (Hz)",  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
+                value=1.0,
+                type=float,
+            ),
+            ConfigParameter(
+                key="param2",
+                display_name="param2 (sec)",  # デフォルト値を書いておき，初回起動時のconfig作成に利用する
+                value=2,
+                type=int,
+            ),
+        ]
+    )
 
     @abstractmethod
     def __init__(
         self,
-        config: Optional[list[ConfigParameter]] = None,
+        config: ConfigList = None,
     ):
         if config is not None:
-            name_to_item = {item.name: item for item in self.config}
+            name_to_item = {item.key: item for item in self.config}
             for item in config:
-                name_to_item[item.name] = item
+                name_to_item[item.key] = item
             self.config = list(name_to_item.values())
         self.configure_ui_components: dict[str, Any] = {}
         for config_entry in self.config:
-            self.configure_ui_components[config_entry.name] = TextFieldWithType(
+            self.configure_ui_components[config_entry.key] = TextFieldWithType(
                 dtype=config_entry.type,
                 default_value=config_entry.value,
             )
@@ -109,8 +107,9 @@ class AnalysisMethodBase(ABC):
                 ft.Container(
                     ft.Row(
                         [
-                            ft.Text(config_entry.name),
-                            self.configure_ui_components[config_entry.name].widget,
+
+                            ft.Text(config_entry.display_name),
+                            self.configure_ui_components[config_entry.key].widget,
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     ),
@@ -129,7 +128,7 @@ class AnalysisMethodBase(ABC):
         """
         for key, value in new_config.items():
             for config_entry in self.config:
-                if config_entry.name == key:
+                if config_entry.key == key:
                     config_entry.value = value
                     self.configure_ui_components[key].widget.value = str(value)
                     break

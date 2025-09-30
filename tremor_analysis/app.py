@@ -11,12 +11,12 @@ import yaml
 from flet import ControlEvent
 
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase, AnalysisResult
-from tremor_analysis.analysis_methods.dummy import (
-    DummyAnalysis,
-    DummyAnalysisCapableTwoData,
-)
-from tremor_analysis.data_models.config_parameter import ConfigParameter
+from tremor_analysis.analysis_methods.coherence import CoherenceAnalysis
+from tremor_analysis.analysis_methods.power_density import PowerDensityAnalysis
+from tremor_analysis.analysis_methods.spectrogram import SpectrogramAnalysis
+from tremor_analysis.data_models.config_parameter import ConfigList, ConfigParameter
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
+from tremor_analysis.utils.path import remove_extension
 from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
 
 CONFIG_FILE_PATH = Path.home() / ".tremor_analysis_config.yaml"
@@ -24,31 +24,39 @@ GENERAL_SETTINGS_KEY = "_general_"
 
 
 class MainApp:
-    CONFIG_DEFAULT_VALUE: list[ConfigParameter] = [
-        ConfigParameter(name="Row start", value=1, type=int),
-        ConfigParameter(name="Column start", value=1, type=int),
-        ConfigParameter(name="Encoding", value="utf-8", type=str),
-    ]
+    CONFIG_DEFAULT_VALUE: ConfigList = ConfigList(
+        [
+            ConfigParameter(
+                key="row_start", display_name="Row start", value=1, type=int
+            ),
+            ConfigParameter(
+                key="column_start", display_name="Column start", value=1, type=int
+            ),
+            ConfigParameter(
+                key="encoding", display_name="Encoding", value="utf-8", type=str
+            ),
+        ]
+    )
     OUTPUT_FILE_EXTENSION = ".tremor.csv"
     ACCEPTABLE_FILE_EXTENSION = ".csv"
 
     def __init__(self) -> None:
         self.analysis_methods: list[AnalysisMethodBase] = [
-            # SpectrogramAnalysis(),
-            DummyAnalysis(),  # ここで解析手法のクラスをインスタンス化
-            DummyAnalysisCapableTwoData(),
+            CoherenceAnalysis(),
+            PowerDensityAnalysis(),
+            SpectrogramAnalysis(),
             # 他の解析手法もここに追加
         ]
         self.yaml_file_handler = YamlFileHandler(
             CONFIG_FILE_PATH,
             {
                 GENERAL_SETTINGS_KEY: {
-                    default.name: default.value for default in self.CONFIG_DEFAULT_VALUE
+                    default.key: default.value for default in self.CONFIG_DEFAULT_VALUE
                 }
             }
             | {
                 method.__class__.__name__: {
-                    entry.name: entry.value for entry in method.config
+                    entry.key: entry.value for entry in method.config
                 }
                 for method in self.analysis_methods
             },
@@ -73,34 +81,32 @@ class MainApp:
         data = []
 
         for file_pair in file_list:
-            # TODO: 正確な値に置き換え
             row_start: int = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
-                "Row start"
+                "row_start"
             ]
             column_start: int = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
-                "Column start"
+                "column_start"
             ]
             encoding: str = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
-                "Encoding"
+                "encoding"
             ]
             if len(file_pair) == 1:
                 data = [
                     np.loadtxt(
                         file_pair[0],
                         delimiter=",",
-                        dtype="unicode",
+                        dtype=float,
                         skiprows=row_start - 1,
                         usecols=range(column_start - 1, column_start + 2),
                         encoding=encoding,
                     )
                 ]
-                pass
             elif len(file_pair) == 2:
                 data = [
                     np.loadtxt(
                         file_pair[0],
                         delimiter=",",
-                        dtype="unicode",
+                        dtype=float,
                         skiprows=row_start - 1,
                         usecols=range(column_start - 1, column_start + 2),
                         encoding=encoding,
@@ -108,44 +114,37 @@ class MainApp:
                     np.loadtxt(
                         file_pair[1],
                         delimiter=",",
-                        dtype="unicode",
+                        dtype=float,
                         skiprows=row_start - 1,
                         usecols=range(column_start - 1, column_start + 2),
                         encoding=encoding,
                     ),
                 ]
-                pass
             else:
                 raise NotImplementedError
-        if self.target_dir:
-            self.output_file = os.path.join(self.target_dir.value, "result.tremor.csv")
-            with open(self.output_file, "w") as file:
-                writer = csv.writer(file)
-                for key, value in result.numerical_result.items():
-                    writer.writerows([[key, value]])
-            self.output_image_file = os.path.join(self.target_dir.value, "image.png")
-            for key, image in result.image_result.items():
-                image.save(self.output_image_file)
-            for method in self.analysis_methods:
-                if method.ACCEPTABLE_DATA_COUNT == 1:
-                    for i, file in enumerate(file_pair):
+            if self.target_dir:
+                for method in self.analysis_methods:
+                    if method.ACCEPTABLE_DATA_COUNT == 1:
+                        for i, _ in enumerate(file_pair):
+                            result = method.run([data[i]])
+                            result.filename1 = file_pair[i]
+                            results_1file.append(result)
+                    elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 2:
+                        # 左右の手のデータペアを受け入れる解析
                         result = method.run(data)
                         result.filename1 = file_pair[0]
-                        results_1file.append(result)
-                elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 2:
-                    # 左右の手のデータペアを受け入れる解析
-                    result = method.run(data)
-                    result.filename1 = file_pair[0]
-                    result.filename2 = file_pair[1]
-                    results_2files.append(result)
-                elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 1:
-                    pass
-                else:
-                    raise NotImplementedError
+                        result.filename2 = file_pair[1]
+                        results_2files.append(result)
+                    elif method.ACCEPTABLE_DATA_COUNT == 2 and len(file_pair) == 1:
+                        pass
+                    else:
+                        raise NotImplementedError
         self.append_result_file(
             results_1file=results_1file,
             results_2files=results_2files,
         )
+        self.save_images(results_1file, results_2files)
+  
         bs = ft.BottomSheet(
             ft.Container(
                 ft.Column(
@@ -164,77 +163,151 @@ class MainApp:
         )
         self.page.show_bottom_sheet(bs)
 
+    def save_images(
+        self, results_1file: list[AnalysisResult], results_2files: list[AnalysisResult]
+    ):
+        # 画像保存先ディレクトリの作成
+        images_dir = os.path.join(self.target_dir.value, "result_images")
+        os.makedirs(images_dir, exist_ok=True)
+
+        for result in results_1file:
+            for key, value in result.image_result.items():
+                value.save(
+                    os.path.join(
+                        images_dir,
+                        f"{os.path.basename(remove_extension(result.filename1))}_"
+                        f"{result.analysis_method_class.__qualname__}_{key}.png",
+                    )
+                )
+        for result in results_2files:
+            for key, value in result.image_result.items():
+                value.save(
+                    os.path.join(
+                        images_dir,
+                        f"{os.path.basename(remove_extension(result.filename1))}_"
+                        f"{os.path.basename(remove_extension(result.filename2))}_"
+                        f"{result.analysis_method_class.__qualname__}_{key}.png",
+                    )
+                )
+
     def append_result_file(
         self,
         results_1file: list[AnalysisResult],  # ファイル名：結果
         results_2files: list[AnalysisResult],
     ) -> None:
 
+        # ファイルごとに解析結果をまとめる
+        def group_results_by_file(
+            results: list[AnalysisResult],
+        ) -> dict[str, list[AnalysisResult]]:
+            """ファイルごとに解析結果をグループ化する"""
+            grouped = {}
+            for result in results:
+                filename = result.filename1
+                if filename not in grouped:
+                    grouped[filename] = []
+                grouped[filename].append(result)
+            return grouped
+
+        # ファイルごとにヘッダーを作成
+        def create_header_from_grouped_results(
+            grouped_results: dict[str, list[AnalysisResult]],
+        ) -> list[str]:
+            """グループ化された結果からヘッダーを作成"""
+            header = []
+
+            # 全てのファイルに対して全ての解析が行われる前提のもと
+            # そのため，0番目のファイルに対する結果を見ればOKとした
+            file_results = grouped_results[list(grouped_results.keys())[0]]
+            for result in file_results:
+                header += [
+                    f"{result.analysis_method_class.__qualname__}_{key}"
+                    for key in result.numerical_result.keys()
+                ]
+            return sorted(list(set(header)))
+
+        # ファイルごとに結果行を作成
+        def create_result_row(
+            filename: str, file_results: list[AnalysisResult], header: list[str]
+        ) -> list:
+            """ファイルごとに結果行を作成"""
+            result_dict = {}
+            for result in file_results:
+                for key, value in result.numerical_result.items():
+                    header_key = f"{result.analysis_method_class.__qualname__}_{key}"
+                    result_dict[header_key] = value
+
+            # ヘッダーの順序に従って値を取得
+            result_row = [result_dict.get(header_key, "") for header_key in header]
+            return [filename] + result_row
+
         #  単一ファイルの結果出力
         output_1file = os.path.join(
             self.target_dir.value, "result_1file" + self.OUTPUT_FILE_EXTENSION
         )
-        #  一通りの結果の列名をmethod_result.numerical_resultから取得してヘッダー作成
 
-        header = []
-        header += [
-            f"{results_1file[0].analysis_method_class.__qualname__}_{key}"
-            for key in results_1file[0].numerical_result.keys()
-        ]
+        # ファイルごとに結果をグループ化
+        grouped_results_1file = group_results_by_file(results_1file)
+
+        # ヘッダー作成
+        header = create_header_from_grouped_results(grouped_results_1file)
+
         #  出力先ファイルの存在確認,なかったらheader書き込み
         if not os.path.isfile(output_1file):
             with open(output_1file, "w", newline="") as file:
                 writer = csv.writer(file)
                 writer.writerow(["filename"] + header)
+
+        # ファイルごとに結果を書き込み
         with open(output_1file, "a", newline="") as file:
             writer = csv.writer(file)
-            # method_result.numerical_resultのキーに対して総当たりで， f"{method_result.analysis_method_class.__qualname__}_{key}" がheaderの要素と一致するものを検索
-            # それの値を書き込み
-            for filename in list(result.filename1 for result in results_1file):
-                # headerの要素に対するループ
-                for method_result in results_1file:
-                    #  クラス名_key: valueの新しいresultリストを作成
-                    result_with_class = {
-                        f"{method_result.analysis_method_class.__qualname__}_{key}": value
-                        for key, value in method_result.numerical_result.items()
-                    }
-                    result_row = [
-                        result_with_class[header_key] for header_key in header
-                    ]
-                writer.writerow([filename] + result_row)
+            for filename, file_results in grouped_results_1file.items():
+                result_row = create_result_row(filename, file_results, header)
+                writer.writerow(result_row)
 
         output_2files = os.path.join(
             self.target_dir.value, "result_2file" + self.OUTPUT_FILE_EXTENSION
         )
 
         if len(results_2files) != 0:
-            # 一通りの結果の列名をmethod_result.numerical_resultから取得してヘッダー作成
-            header = []
-            header += [
-                f"{results_2files[0].analysis_method_class.__qualname__}_{key}"
-                for key in results_2files[0].numerical_result.keys()
-            ]
+            # 2ファイル解析の場合は、ファイルペアごとにグループ化
+            grouped_results_2files = {}
+            for result in results_2files:
+                file_pair = (result.filename1, result.filename2)
+                if file_pair not in grouped_results_2files:
+                    grouped_results_2files[file_pair] = []
+                grouped_results_2files[file_pair].append(result)
+
+            # ヘッダー作成
+            header = create_header_from_grouped_results(grouped_results_2files)
+
             # 出力先ファイルの存在確認,なかったらheader書き込み
             if not os.path.isfile(output_2files):
                 with open(output_2files, "w", newline="") as file:
                     writer = csv.writer(file)
                     writer.writerow(["filename1", "filename2"] + header)
+
+            # ファイルペアごとに結果を書き込み
             with open(output_2files, "a", newline="") as file:
                 writer = csv.writer(file)
+                for (
+                    filename1,
+                    filename2,
+                ), file_results in grouped_results_2files.items():
+                    result_dict = {}
+                    for result in file_results:
+                        for key, value in result.numerical_result.items():
+                            header_key = (
+                                f"{result.analysis_method_class.__qualname__}_{key}"
+                            )
+                            result_dict[header_key] = value
 
-                for results in results_2files:
-                    #  クラス名_key: valueの新しいresultリストを作成
-                    result_with_class = {
-                        f"{results.analysis_method_class.__qualname__}_{key}": value
-                        for key, value in results.numerical_result.items()
-                    }
                     result_row = [
-                        result_with_class[header_key] for header_key in header
+                        result_dict.get(header_key, "") for header_key in header
                     ]
-                    writer.writerow([results.filename1, results.filename2] + result_row)
-            pass
+                    writer.writerow([filename1, filename2] + result_row)
 
-    def on_run_click(self, e: ControlEvent):
+    def on_run_click(self, _: ControlEvent):
         """Buttonのon_clickでは, 引数にControlEventが渡されるが，run()では不要のため, この関数でwrapしている
 
         Args:
@@ -242,12 +315,12 @@ class MainApp:
         """
         self.run()
 
-    def read_config_file(self, e: ControlEvent):
+    def read_config_file(self, _: ControlEvent):
         with open(CONFIG_FILE_PATH) as file:
             self.config = yaml.safe_load(file)
         print(self.config)
 
-    def write_config_file(self, e: ControlEvent):
+    def write_config_file(self, _: ControlEvent):
         self.config["key1"] = "change"
         self.config["add_key"] = "add"
         with open(CONFIG_FILE_PATH, "w") as file:
@@ -340,7 +413,7 @@ class MainApp:
             ):
                 config.value = config_component.value
                 yaml_file_content_tmp[method.__class__.__name__][
-                    config.name
+                    config.key
                 ] = config_component.value
         if yaml_file_content_tmp != self.yaml_file_handler.content:
             self.yaml_file_handler.content = yaml_file_content_tmp
@@ -368,7 +441,7 @@ class MainApp:
         self.general_setting_fields = {
             config_key: TextFieldWithType(
                 dtype=list(
-                    filter(lambda x: x.name == config_key, self.CONFIG_DEFAULT_VALUE)
+                    filter(lambda x: x.key == config_key, self.CONFIG_DEFAULT_VALUE)
                 )[0].type,
                 default_value=config_value,
             )
@@ -390,9 +463,9 @@ class MainApp:
                             ft.Container(
                                 ft.Row(
                                     [
-                                        ft.Text(general_config.name),
+                                        ft.Text(general_config.display_name),
                                         self.general_setting_fields[
-                                            general_config.name
+                                            general_config.key
                                         ].widget,
                                     ],
                                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -470,39 +543,6 @@ class MainApp:
         self.build_ui()
         self.page.update()
         page.update()
-
-
-class SpectrogramAnalysis:
-    def __init__(self):
-        self.data = 3
-
-    def run(
-        self,
-    ) -> dict[str, Any]:
-        self.val = 1 + self.data
-        self.answer = {"answer": self.val}
-
-    def import_config(self):
-        with open(CONFIG_FILE_PATH) as file:
-            self.config = yaml.safe_load(file)
-        self.max = self.config["SpectrogramAnalysis"]["max"]
-        self.min = self.config["SpectrogramAnalysis"]["min"]
-
-    def export_config(self):
-        return self.config["SpectrogramAnalysis"]
-
-    def build_result_ui(self):
-        self.text_area = ft.Text("設定項目")
-        self.val_area = ft.TextField(hint_text="int")
-        x = ft.Container(ft.Row(self.text_area, self.val_area))
-        return x
-
-        # Main_appでのrunでこれも呼ぶ？？
-
-    def update_ui(self):
-        # 横並びで一塊にして配置したい　https://qiita.com/donraq/items/1ac45ddfe0a803a94e27
-        # ここでつくる=>Main_appにUI関係のmake_picみたいなやつを作って並べる
-        print("test")
 
 
 def main():
