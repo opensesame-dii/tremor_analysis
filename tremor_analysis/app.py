@@ -62,7 +62,8 @@ class MainApp:
             },
         )
         self.apply_config_on_each_method()
-        self.target_dir = ft.Text(value="Not Selected")
+        self.target_dir_default_value = "Not Selected"
+        self.target_dir = ft.Text(value=self.target_dir_default_value)
         self.log_content = ft.Text()
         self.file_num = 0
         self.pairs_num = 0
@@ -70,6 +71,10 @@ class MainApp:
         self.general_setting_fields: dict[str, TextFieldWithType] = {}
 
     def run(self):
+        if self.target_dir.value == self.target_dir_default_value:
+            self.log_content.value = "No folder is selected"
+            self.page.update()
+            return
         results_1file: list[AnalysisResult] = []
         results_2files: list[AnalysisResult] = []
         file_list = self.scan()
@@ -139,6 +144,24 @@ class MainApp:
             results_2files=results_2files,
         )
         self.save_images(results_1file, results_2files)
+  
+        bs = ft.BottomSheet(
+            ft.Container(
+                ft.Column(
+                    [
+                        ft.Text("Finished"),
+                        ft.ElevatedButton(
+                            "Done", on_click=lambda _: self.page.close_bottom_sheet()
+                        ),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    tight=True,
+                ),
+                padding=50,
+            ),
+            open=False,
+        )
+        self.page.show_bottom_sheet(bs)
 
     def save_images(
         self, results_1file: list[AnalysisResult], results_2files: list[AnalysisResult]
@@ -318,7 +341,7 @@ class MainApp:
 
     # scan directory
     def scan(self) -> list[list[str]]:
-        if self.target_dir.value != "Not Selected":
+        if self.target_dir.value != self.target_dir_default_value:
             file_list = []
             self.file_num = 0
             self.pairs_num = 0
@@ -355,6 +378,7 @@ class MainApp:
 
         else:  # Not Selected なら
             self.log_content.value = "No folder is selected"
+            file_list = []
 
         self.page.update()
         return file_list
