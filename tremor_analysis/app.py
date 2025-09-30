@@ -12,14 +12,9 @@ from flet import ControlEvent
 
 from tremor_analysis.analysis_methods.base import AnalysisMethodBase, AnalysisResult
 from tremor_analysis.analysis_methods.coherence import CoherenceAnalysis
-from tremor_analysis.analysis_methods.dummy import (
-    DummyAnalysis,
-    DummyAnalysisCapableTwoData,
-)
-from tremor_analysis.analysis_methods.spectrogram import SpectrogramAnalysis
-from tremor_analysis.analysis_methods.coherence import CoherenceAnalysis
 from tremor_analysis.analysis_methods.power_density import PowerDensityAnalysis
-from tremor_analysis.data_models.config_parameter import ConfigParameter, ConfigList
+from tremor_analysis.analysis_methods.spectrogram import SpectrogramAnalysis
+from tremor_analysis.data_models.config_parameter import ConfigList, ConfigParameter
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
 from tremor_analysis.utils.path import remove_extension
 from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
@@ -47,8 +42,6 @@ class MainApp:
 
     def __init__(self) -> None:
         self.analysis_methods: list[AnalysisMethodBase] = [
-            DummyAnalysis(),  # ここで解析手法のクラスをインスタンス化
-            DummyAnalysisCapableTwoData(),
             CoherenceAnalysis(),
             PowerDensityAnalysis(),
             SpectrogramAnalysis(),
@@ -83,7 +76,6 @@ class MainApp:
         data = []
 
         for file_pair in file_list:
-            # TODO: 正確な値に置き換え
             row_start: int = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
                 "row_start"
             ]
@@ -104,7 +96,6 @@ class MainApp:
                         encoding=encoding,
                     )
                 ]
-                pass
             elif len(file_pair) == 2:
                 data = [
                     np.loadtxt(
@@ -124,13 +115,12 @@ class MainApp:
                         encoding=encoding,
                     ),
                 ]
-                pass
             else:
                 raise NotImplementedError
             if self.target_dir:
                 for method in self.analysis_methods:
                     if method.ACCEPTABLE_DATA_COUNT == 1:
-                        for i, file in enumerate(file_pair):
+                        for i, _ in enumerate(file_pair):
                             result = method.run([data[i]])
                             result.filename1 = file_pair[i]
                             results_1file.append(result)
@@ -294,7 +284,7 @@ class MainApp:
                     ]
                     writer.writerow([filename1, filename2] + result_row)
 
-    def on_run_click(self, e: ControlEvent):
+    def on_run_click(self, _: ControlEvent):
         """Buttonのon_clickでは, 引数にControlEventが渡されるが，run()では不要のため, この関数でwrapしている
 
         Args:
@@ -302,12 +292,12 @@ class MainApp:
         """
         self.run()
 
-    def read_config_file(self, e: ControlEvent):
+    def read_config_file(self, _: ControlEvent):
         with open(CONFIG_FILE_PATH) as file:
             self.config = yaml.safe_load(file)
         print(self.config)
 
-    def write_config_file(self, e: ControlEvent):
+    def write_config_file(self, _: ControlEvent):
         self.config["key1"] = "change"
         self.config["add_key"] = "add"
         with open(CONFIG_FILE_PATH, "w") as file:
