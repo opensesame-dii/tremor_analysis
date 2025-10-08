@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 
 def remove_extension(path: str):
@@ -24,3 +25,24 @@ def remove_extension(path: str):
     # パスがファイルの場合、拡張子を取り除く
     else:
         return os.path.splitext(path)[0]
+
+
+def replace_sep_in_path(filename: str, new_sep: str = "_") -> str:
+    """パス区切り文字を指定された文字に置換する．ただし，先頭のパス区切り文字は除去する．
+
+    Args:
+        filename (str): ファイルパス
+        new_sep (str, optional): 新しいパス区切り文字. Defaults to "_".
+
+    Returns:
+        str: パス区切り文字を置換した文字列
+
+    Examples:
+        >>> replace_sep_in_path("/path/to/example.txt")
+        'path_to_example.txt'
+        >>> replace_sep_in_path("path_to/example.txt", new_sep="-")
+        'path_to-example.txt'
+    """
+    path = Path(filename)
+    parts = [p for p in path.parts if p != "/"]
+    return new_sep.join(parts)

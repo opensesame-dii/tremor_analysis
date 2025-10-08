@@ -16,7 +16,7 @@ from tremor_analysis.analysis_methods.power_density import PowerDensityAnalysis
 from tremor_analysis.analysis_methods.spectrogram import SpectrogramAnalysis
 from tremor_analysis.data_models.config_parameter import ConfigList, ConfigParameter
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
-from tremor_analysis.utils.path import remove_extension
+from tremor_analysis.utils.path import remove_extension, replace_sep_in_path
 from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
 
 CONFIG_FILE_PATH = Path.home() / ".tremor_analysis_config.yaml"
@@ -144,7 +144,7 @@ class MainApp:
             results_2files=results_2files,
         )
         self.save_images(results_1file, results_2files)
-  
+
         bs = ft.BottomSheet(
             ft.Container(
                 ft.Column(
@@ -175,8 +175,8 @@ class MainApp:
                 value.save(
                     os.path.join(
                         images_dir,
-                        f"{os.path.basename(remove_extension(result.filename1))}_"
-                        f"{result.analysis_method_class.__qualname__}_{key}.png",
+                        f"{remove_extension(replace_sep_in_path(result.filename1))}"
+                        f"_{result.analysis_method_class.__qualname__}_{key}.png",
                     )
                 )
         for result in results_2files:
