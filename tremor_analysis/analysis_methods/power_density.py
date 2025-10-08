@@ -118,7 +118,6 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         peak_freq = f[peak_idx[0][0]]
         tsi = self.tremor_stability_index(data, self.config["sampling_rate"].value)
 
-        # TODO: FWHM(full width half maximum), HWP(half-width power) の実装
         image, is_estimated_value, fwhm, hwp = self.create_result_image(specs, f)
 
         return AnalysisResult(
@@ -136,7 +135,9 @@ class PowerDensityAnalysis(AnalysisMethodBase):
             filename2=None,
         )
 
-    def create_result_image(self, specs: np.ndarray, f: np.ndarray) -> ft.Image:
+    def create_result_image(
+        self, specs: np.ndarray, f: np.ndarray
+    ) -> tuple[ft.Image, bool, float, float]:
         """
         Create a result image from the spectrogram data.
 
@@ -145,6 +146,9 @@ class PowerDensityAnalysis(AnalysisMethodBase):
 
         Returns:
             ft.Image: Result image.
+            bool: is estimated_value
+            float: FWHM(full width half maximum)
+            float: HWP(half-width power)
         """
 
         # spectral amptitude
@@ -170,7 +174,6 @@ class PowerDensityAnalysis(AnalysisMethodBase):
             ax.set_xlabel("Frequency [Hz]")
             ax.set_ylabel("Amplitude")
             ax.plot(f, specs[i])
-        # TODO: fwhmの結果から，グラフの色を塗る領域を決める
         is_estimated_value, lower_idx, upper_idx, hwp, fwhm = (
             self.full_width_half_maximum(f, specs[3])
         )
@@ -287,7 +290,6 @@ class PowerDensityAnalysis(AnalysisMethodBase):
         pca = PCA(n_components=1)
         x = np.ravel(pca.fit_transform(np.array(data).T))
         length = len(x)
-        # TODO ↓のnpersegはconfigのとは別？
         nperseg = (
             self.config["sampling_rate"].value
             * self.config["segment_duration_sec"].value
