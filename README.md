@@ -2,12 +2,12 @@
 ```
 git clone git@github.com:opensesame-dii/tremor_analysis.git
 cd tremor_analysis
-pip install -e .
+uv sync
 ```
 
 # launch
 ```
-trun
+uv run trun
 ```
 
 # file location
