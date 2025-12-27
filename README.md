@@ -1,3 +1,6 @@
+# dependancies
+- uv (as python package manager)
+
 # installation
 ```
 git clone git@github.com:opensesame-dii/tremor_analysis.git
