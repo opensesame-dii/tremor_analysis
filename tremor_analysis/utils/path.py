@@ -1,5 +1,5 @@
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 
 def remove_extension(path: str):
@@ -43,6 +43,28 @@ def replace_sep_in_path(filename: str, new_sep: str = "_") -> str:
         >>> replace_sep_in_path("path_to/example.txt", new_sep="-")
         'path_to-example.txt'
     """
-    path = Path(filename)
-    parts = [p for p in path.parts if p != "/"]
+    # remove drive letter on Windows
+    path = Path(remove_drive_letter_windows(filename))
+    parts = [p for p in path.parts if p != os.path.sep]
     return new_sep.join(parts)
+
+
+def remove_drive_letter_windows(path: str) -> str:
+    """Windowsのドライブレターをパスから取り除く
+
+    Args:
+        path (str): ファイルパス
+
+    Returns:
+        str: ドライブレターを取り除いたパス
+
+    Examples:
+        >>> remove_drive_letter_windows("C:\\path\\to\\example.txt")
+        '\\path\\to\\example.txt'
+        >>> remove_drive_letter_windows("/path/to/example.txt")
+        '/path/to/example.txt'
+    """
+    p = PureWindowsPath(path)
+    if p.drive:
+        return str(p.relative_to(p.anchor)) if p.drive else path
+    return path
