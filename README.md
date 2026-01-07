@@ -44,6 +44,15 @@ target_dir/
 1. Start the analysis by clicking the "Run" button.
 1. After the analysis is complete, the results will be saved in `target_directory/result_1file.tremor.csv`, `target_directory/result_2file.tremor.csv` and `target_directory/result_images`. `target_directory` is opened by clicking the "Open Result" button.
 
+For encoding settings, you can view the list of available encodings:
+```python
+import encodings
+import pkgutil
+encs = sorted(m.name for m in pkgutil.iter_modules(encodings.__path__))
+print(len(encs))
+print(encs)
+```
+
 # example
 `example_directory_structure` contains an example directory structure with sample data files for testing the system. You can use it to verify that the system is functioning correctly.
 In this example, `example_directory_structure/target_dir` should be specified as the target directory by clicking "Select Folder" button in the GUI.
