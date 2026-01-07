@@ -8,7 +8,7 @@ authors = [
     { name = "shioneko37", email = "shioneko37@gmail.com" },
     { name = "KateSawada", email = "nuksawada@gmail.com" },
 ]
-
+requires-python = ">= 3.11.5"
 
 
 dependencies = [
