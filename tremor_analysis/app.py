@@ -80,7 +80,19 @@ class MainApp:
         file_list = self.scan()
         data = []
 
-        for file_pair in file_list:
+        self.log_content.value += (
+            f"\nRunning analysis on"
+            f"{self.file_num} files and"
+            f"{self.pairs_num} pairs...\n"
+        )
+        self.page.update()
+
+        for i, file_pair in enumerate(file_list):
+            self.log_content.value += (
+                f"Analyzing file(s) {i+1}/{len(file_list)}: {file_pair}\n"
+            )
+            self.page.update()
+
             row_start: int = self.yaml_file_handler.content[GENERAL_SETTINGS_KEY][
                 "row_start"
             ]
