@@ -441,7 +441,9 @@ class MainApp:
                 self.target_dir,
             ]
         )
-        scan_button = ft.OutlinedButton(text="Scan", on_click=self.on_scan_click)
+        scan_button = ft.OutlinedButton(
+            text="Preview Files", on_click=self.on_scan_click
+        )
         run_button = ft.OutlinedButton(text="Run", on_click=self.on_run_click)
         open_result_button = ft.OutlinedButton(
             text="Open Result", on_click=self.on_open_result_click
