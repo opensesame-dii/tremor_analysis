@@ -58,3 +58,10 @@ print(encs)
 In this example, `example_directory_structure/target_dir` should be specified as the target directory by clicking "Select Folder" button in the GUI.
 
 `generate_sample_file.py` and `run_generate_sample.sh` are scripts to generate sample data files.
+
+# how to add new analysis method
+All python classes for analysis are implemented in `tremor_analysis/analysis_methods/`.
+If you want to implement additional analysis, follow the example of `tremor_analysis/analysis_methods/spectrogram.py` by inheriting from class `tremor_analysis.analysis_methods.base.AnalysisMethodBase` and implement the following items:
+- The class variable `ACCEPTABLE_DATA_COUNT`
+- Configuration items via the `config` class variable
+- Analysis processing via implementation of the `run()` method
