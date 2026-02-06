@@ -65,3 +65,9 @@ If you want to implement additional analysis, follow the example of `tremor_anal
 - The class variable `ACCEPTABLE_DATA_COUNT`
 - Configuration items via the `config` class variable
 - Analysis processing via implementation of the `run()` method
+
+
+# References
+1. Rodger J. Elble, James McNames. "Using Portable Transducers to Measure Tremor Severity," https://tremorjournal.org/article/10.5334/tohm.320/
+1. Anne Sofie Bøgh Malling, Bo Mohr Morberg, Lene Wermuth, Ole Gredal, Per Bech, Bente Rona Jensen. "The effect of 8 weeks of treatment with transcranial pulsed electromagnetic fields on hand tremor and inter-hand coherence in persons with Parkinson’s disease," https://jneuroengrehab.biomedcentral.com/articles/10.1186/s12984-019-0491-2
+1. K Terry, L Griffin. "How computational technique and spike train properties affect coherence detection," https://pubmed.ncbi.nlm.nih.gov/17976736/
