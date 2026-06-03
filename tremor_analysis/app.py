@@ -1,6 +1,7 @@
 import csv
 import os
 import platform
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -16,7 +17,6 @@ from tremor_analysis.analysis_methods.power_density import PowerDensityAnalysis
 from tremor_analysis.analysis_methods.spectrogram import SpectrogramAnalysis
 from tremor_analysis.data_models.config_parameter import ConfigList, ConfigParameter
 from tremor_analysis.ui.text_field_with_type import TextFieldWithType
-from tremor_analysis.utils.path import remove_extension, replace_sep_in_path
 from tremor_analysis.utils.yaml_file_handler import YamlFileHandler
 
 CONFIG_FILE_PATH = Path.home() / ".tremor_analysis_config.yaml"
@@ -151,11 +151,11 @@ class MainApp:
                         pass
                     else:
                         raise NotImplementedError
+        self.save_images(results_1file, results_2files)
         self.append_result_file(
             results_1file=results_1file,
             results_2files=results_2files,
         )
-        self.save_images(results_1file, results_2files)
 
         bs = ft.BottomSheet(
             ft.Container(
@@ -182,25 +182,76 @@ class MainApp:
         images_dir = os.path.join(self.target_dir.value, "result_images")
         os.makedirs(images_dir, exist_ok=True)
 
+        image_index = 1
         for result in results_1file:
             for key, value in result.image_result.items():
-                value.save(
-                    os.path.join(
-                        images_dir,
-                        f"{remove_extension(replace_sep_in_path(result.filename1))}"
-                        f"_{result.analysis_method_class.__qualname__}_{key}.png",
-                    )
+                filename = self.create_image_filename(
+                    image_index,
+                    [result.filename1],
+                    result.analysis_method_class.__qualname__,
+                    key,
                 )
+                relative_path = os.path.join("result_images", filename)
+                value.save(os.path.join(self.target_dir.value, relative_path))
+                result.image_paths[key] = relative_path
+                image_index += 1
         for result in results_2files:
             for key, value in result.image_result.items():
-                value.save(
-                    os.path.join(
-                        images_dir,
-                        f"{os.path.basename(remove_extension(result.filename1))}_"
-                        f"{os.path.basename(remove_extension(result.filename2))}_"
-                        f"{result.analysis_method_class.__qualname__}_{key}.png",
-                    )
+                filename = self.create_image_filename(
+                    image_index,
+                    [result.filename1, result.filename2],
+                    result.analysis_method_class.__qualname__,
+                    key,
                 )
+                relative_path = os.path.join("result_images", filename)
+                value.save(os.path.join(self.target_dir.value, relative_path))
+                result.image_paths[key] = relative_path
+                image_index += 1
+
+    def create_image_filename(
+        self,
+        index: int,
+        source_paths: list[str],
+        analysis_method_name: str,
+        image_key: str,
+    ) -> str:
+        max_length = 120
+        extension = ".png"
+        prefix = f"img_{index:04d}_"
+        analysis_label = self.sanitize_filename_part(
+            analysis_method_name, max_length=40
+        )
+        image_label = self.sanitize_filename_part(image_key, max_length=40)
+        suffix = f"{analysis_label}_{image_label}"
+        source_label = "_".join(
+            self.create_source_label(source_path) for source_path in source_paths
+        )
+        max_source_length = max(
+            20,
+            max_length - len(prefix) - len(suffix) - len(extension) - 1,
+        )
+        source_label = self.shorten_text(source_label, max_source_length)
+        return f"{prefix}{source_label}_{suffix}{extension}"
+
+    def create_source_label(self, source_path: str) -> str:
+        path = Path(source_path)
+        parent_name = self.sanitize_filename_part(path.parent.name, max_length=48)
+        stem = self.sanitize_filename_part(path.stem, max_length=64)
+        if parent_name:
+            return f"{parent_name}_{stem}"
+        return stem
+
+    def sanitize_filename_part(self, value: str, max_length: int) -> str:
+        sanitized = re.sub(r'[<>:"/\\|?*\x00-\x1f]+', "_", value)
+        sanitized = re.sub(r"\s+", "_", sanitized).strip("._- ")
+        if len(sanitized) > max_length:
+            sanitized = sanitized[:max_length].rstrip("._- ")
+        return sanitized or "file"
+
+    def shorten_text(self, text: str, max_length: int) -> str:
+        if len(text) <= max_length:
+            return text
+        return text[:max_length].rstrip("._- ")
 
     def append_result_file(
         self,
@@ -236,6 +287,10 @@ class MainApp:
                     f"{result.analysis_method_class.__qualname__}_{key}"
                     for key in result.numerical_result.keys()
                 ]
+                header += [
+                    f"{result.analysis_method_class.__qualname__}_{key}_image"
+                    for key in result.image_paths.keys()
+                ]
             return sorted(list(set(header)))
 
         # ファイルごとに結果行を作成
@@ -247,6 +302,9 @@ class MainApp:
             for result in file_results:
                 for key, value in result.numerical_result.items():
                     header_key = f"{result.analysis_method_class.__qualname__}_{key}"
+                    result_dict[header_key] = value
+                for key, value in result.image_paths.items():
+                    header_key = f"{result.analysis_method_class.__qualname__}_{key}_image"
                     result_dict[header_key] = value
 
             # ヘッダーの順序に従って値を取得
@@ -264,15 +322,10 @@ class MainApp:
         # ヘッダー作成
         header = create_header_from_grouped_results(grouped_results_1file)
 
-        #  出力先ファイルの存在確認,なかったらheader書き込み
-        if not os.path.isfile(output_1file):
-            with open(output_1file, "w", newline="") as file:
-                writer = csv.writer(file)
-                writer.writerow(["filename"] + header)
-
         # ファイルごとに結果を書き込み
-        with open(output_1file, "a", newline="") as file:
+        with open(output_1file, "w", newline="") as file:
             writer = csv.writer(file)
+            writer.writerow(["filename"] + header)
             for filename, file_results in grouped_results_1file.items():
                 result_row = create_result_row(filename, file_results, header)
                 writer.writerow(result_row)
@@ -293,15 +346,10 @@ class MainApp:
             # ヘッダー作成
             header = create_header_from_grouped_results(grouped_results_2files)
 
-            # 出力先ファイルの存在確認,なかったらheader書き込み
-            if not os.path.isfile(output_2files):
-                with open(output_2files, "w", newline="") as file:
-                    writer = csv.writer(file)
-                    writer.writerow(["filename1", "filename2"] + header)
-
             # ファイルペアごとに結果を書き込み
-            with open(output_2files, "a", newline="") as file:
+            with open(output_2files, "w", newline="") as file:
                 writer = csv.writer(file)
+                writer.writerow(["filename1", "filename2"] + header)
                 for (
                     filename1,
                     filename2,
@@ -311,6 +359,11 @@ class MainApp:
                         for key, value in result.numerical_result.items():
                             header_key = (
                                 f"{result.analysis_method_class.__qualname__}_{key}"
+                            )
+                            result_dict[header_key] = value
+                        for key, value in result.image_paths.items():
+                            header_key = (
+                                f"{result.analysis_method_class.__qualname__}_{key}_image"
                             )
                             result_dict[header_key] = value
 

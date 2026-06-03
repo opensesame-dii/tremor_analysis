@@ -24,6 +24,7 @@ class AnalysisResult:
     analysis_method_class: Type[AnalysisMethodBase]
     filename1: Optional[str]
     filename2: Optional[str]
+    image_paths: dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 class AnalysisMethodBase(ABC):
