@@ -16,3 +16,4 @@ class AnalysisResult:
     image_result: dict[str, Image.Image]
     filename1: Union[Type[None], Type[str]]
     filename2: Union[Type[None], Type[str]]
+    image_paths: dict[str, str] = dataclasses.field(default_factory=dict)
