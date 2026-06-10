@@ -288,7 +288,7 @@ class PowerDensityAnalysis(AnalysisMethodBase):
 
         # principal component analysis
         pca = PCA(n_components=1)
-        x = np.ravel(pca.fit_transform(np.array(data).T))
+        x = np.ravel(pca.fit_transform(np.array(data)))
         length = len(x)
         nperseg = (
             self.config["sampling_rate"].value
