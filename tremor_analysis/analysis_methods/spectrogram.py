@@ -157,7 +157,7 @@ class SpectrogramAnalysis(AnalysisMethodBase):
         im = ax_pca.imshow(
             specs[-1], aspect="auto", origin="lower", vmin=vmin, vmax=vmax
         )
-        ax_pca.set_title("norm")
+        ax_pca.set_title("Principal Component")
         ax_pca.set_ylabel("Frequency")
         ax_pca.set_xticks([])
 
