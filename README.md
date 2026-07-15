@@ -1,3 +1,8 @@
+# TremorKit
+An open-source software for analyzing tremor data.
+
+Presented at 第20回パーキンソン病・運動障害疾患コングレス.
+
 # dependancies
 - uv (as python package manager)
 
